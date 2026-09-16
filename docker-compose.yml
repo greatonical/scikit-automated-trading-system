@@ -1,0 +1,65 @@
+# Base compose: the engine (brain + dashboard) and the mt5 (Wine) execution
+# container. README §13 architecture. Dev/prod resource overrides live in
+# docker-compose.dev.yml / docker-compose.prod.yml.
+#
+#   Backtest only (no MT5):   docker compose up engine
+#   With live MT5 trading:    docker compose --profile live up
+#
+# The mt5 service sits behind the `live` profile so normal backtesting never
+# starts the heavy Wine container. Both services share a network; the engine
+# reaches the mt5 RPC server by the service name "mt5".
+#
+# NOTE: the mt5 (Wine) service is a documented DEAD END — mt5.initialize() cannot
+# work under Wine (docs/WINE_VERDICT.md). It is kept for reproducibility. For live
+# execution, run the RPC server on a native Windows host and point the engine at
+# it: EXECUTION_HANDLER=remote_mt5, MT5_RPC_HOST=<windows host>, MT5_RPC_TOKEN=...
+
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: docker/engine/Dockerfile
+    container_name: ats-engine
+    env_file:
+      - .env
+    environment:
+      # Backtests always use the mock. EXECUTION_HANDLER picks the dashboard's
+      # Live-mode route: mock = paper, remote_mt5 = RPC to the MT5 host.
+      - EXECUTION_HANDLER=${EXECUTION_HANDLER:-mock}
+      - MT5_RPC_HOST=${MT5_RPC_HOST:-mt5}
+      - MT5_RPC_PORT=${MT5_RPC_PORT:-9099}
+    volumes:
+      # Share the cached data + saved models with the host, so the container
+      # backtests the SAME cached window the documented numbers came from
+      # (without them it would refetch a different, newer window from Yahoo).
+      - ./data:/app/data
+      - ./models:/app/models
+    ports:
+      - "8501:8501"          # Streamlit dashboard
+    networks:
+      - ats
+    restart: unless-stopped
+
+  mt5:
+    build:
+      context: .
+      dockerfile: docker/mt5/Dockerfile
+    container_name: ats-mt5
+    platform: linux/amd64    # x86 only (Wine); emulated on Apple Silicon
+    profiles: ["live"]       # only started with `--profile live`
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=:99
+      - WINEDEBUG=-all
+    command: ["wine", "python", "/app/src/execution/mt5_service.py"]
+    expose:
+      - "9099"               # RPC port, reachable by the engine on the ats network
+    networks:
+      - ats
+    restart: unless-stopped
+    # Single instance only — never scale above 1 (README §13).
+
+networks:
+  ats:
+    driver: bridge

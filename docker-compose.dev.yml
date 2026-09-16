@@ -1,0 +1,24 @@
+# DEV overrides — headless like prod (simulates production), with enough headroom
+# to debug comfortably. Use:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile live up
+services:
+  engine:
+    environment:
+      - LOG_LEVEL=DEBUG
+    mem_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "2.0"
+
+  mt5:
+    # Headless (xvfb) exactly like prod; a bit more memory to allow debugging.
+    mem_limit: 1536m
+    deploy:
+      resources:
+        limits:
+          memory: 1536m
+          cpus: "1.5"
+        reservations:
+          memory: 768m

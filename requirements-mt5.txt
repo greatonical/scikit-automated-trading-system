@@ -1,0 +1,10 @@
+# MT5 execution dependencies — installed ONLY inside the Wine/Docker container
+# (README §11/§13). MetaTrader5 is Windows-only and will NOT install on macOS/Linux.
+# Do not add this to the core requirements.txt.
+
+# numpy MUST be <2 here: numpy 2.x calls ucrtbase.dll.crealf, which Wine's
+# Windows C runtime does not implement, so numpy 2 (and therefore MetaTrader5)
+# aborts under Wine. 1.26.4 is the last 1.x and imports cleanly. This pin applies
+# ONLY inside the Wine container; the macOS engine still uses modern numpy.
+numpy==1.26.4
+MetaTrader5

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python -c \"import sklearn,pandas,numpy,yfinance,streamlit; print\\(sklearn.__version__,pandas.__version__,numpy.__version__,yfinance.__version__,streamlit.__version__\\)\")",
+      "Bash(awk '{ if \\(length\\($0\\) > 3000\\) print NR\": LONG \\(\"length\\($0\\)\" chars\\) \"substr\\($0,1,60\\) }' GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3_corrected.md)",
+      "Bash(sed -i '' 's/if c is not None else None for o, c in zip/if pd.notna\\(c\\) else None for o, c in zip/' diag.py)",
+      "Bash(.venv/bin/python /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/diag.py)",
+      "Bash(rsync -a --exclude .venv --exclude .pytest_cache --exclude __pycache__ ./ /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/backup_pre_fix/)",
+      "Bash(.venv/bin/python -c \"import docx; print\\('yes'\\)\")",
+      "Bash(.venv/bin/python /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/snapshot.py /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/snap_before.json)",
+      "Bash(.venv/bin/python -c \"import ast,sys; [ast.parse\\(open\\(f\\).read\\(\\), f\\) for f in ['src/data_handler.py','src/preprocessor.py','src/backtester.py','src/risk_manager.py','src/signal_generator.py','src/ml_model.py','config/settings.py']]; print\\('parse OK'\\)\")",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(.venv/bin/python -m pytest -q -p no:warnings)",
+      "Bash(/private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/experiments.sh)",
+      "Bash(.venv/bin/python /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/sensitivity.py)",
+      "Bash(.venv/bin/python -m pytest -q -p no:warnings tests/test_backtester.py)",
+      "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python -m pytest -q -p no:warnings)",
+      "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python scripts/inspect_model.py)",
+      "Bash(find /Users/admin/Documents/Projects/BackendProjects/gadel-engine/docs -iname *retro*)",
+      "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python -m compileall -q src scripts dashboard config tests)"
+    ]
+  }
+}

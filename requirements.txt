@@ -1,0 +1,18 @@
+# Core analytical engine — macOS-installable. NO MetaTrader5 here (README §11/§13).
+# MetaTrader5 is Windows-only and lives in requirements-mt5.txt (Wine container only).
+# NO tensorflow / keras / torch — this project is Random Forest only (README §1).
+
+yfinance
+pandas
+numpy
+scikit-learn
+matplotlib
+streamlit
+joblib
+python-dotenv
+
+# Testing
+pytest
+
+# Optional: fast parquet caching (DataHandler falls back to csv if absent)
+pyarrow
