@@ -35,7 +35,27 @@
       "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h)",
       "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h --send)",
       "Bash(.venv/bin/python scripts/live_session.py GBPUSD 1h --send)",
-      "Bash(.venv/bin/python -m pytest tests/test_mt5_execution.py -q -p no:warnings)"
+      "Bash(.venv/bin/python -m pytest tests/test_mt5_execution.py -q -p no:warnings)",
+      "mcp__claude_ai_Adobe_for_creativity__adobe_mandatory_init",
+      "Bash(.venv/bin/python -c \"import pptx; print\\('python-pptx', pptx.__version__\\)\")",
+      "Bash(unzip -o -q 'docs/Sample of Presentation.pptx' -d /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/sample)",
+      "Bash(.venv/bin/python -)",
+      "mcp__claude_ai_Adobe_for_creativity__create_visual_design_express_skill",
+      "Bash(.venv/bin/python -c \"import pptx; print\\('python-pptx OK', pptx.__version__\\)\")",
+      "Bash(ls ~/Library/Fonts /Library/Fonts /System/Library/Fonts 2>/dev/null | grep -iE \"montserrat|lato|poppins|inter|open.?sans|source.?sans|raleway|nunito\" | sort -u | head -20 || echo \"none of those found\")",
+      "Read(//Users/admin/Library/Fonts/**)",
+      "Bash(.venv/bin/python scripts/make_defence_deck.py)",
+      "Bash(echo \"=== nice sans fonts present ===\"; ls /System/Library/Fonts /Library/Fonts ~/Library/Fonts 2>/dev/null | grep -iE \"avenir|helvetica|calibri|trebuchet|futura|gill|optima|verdana|tahoma|segoe\" | sort -u | head -15; echo \"=== LibreOffice \\(for rendering previews\\)? ===\"; ls /Applications/LibreOffice.app/Contents/MacOS/soffice 2>/dev/null || which soffice libreoffice 2>/dev/null || echo \"not installed\")",
+      "Read(//System/Library/Fonts/**)",
+      "Read(//Applications/LibreOffice.app/Contents/MacOS/**)",
+      "Bash(mkdir -p /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/fonts)",
+      "Bash(curl -sL --max-time 60 -o mont.zip \"https://fonts.google.com/download?family=Montserrat\")",
+      "Bash(unzip -o -q mont.zip -d mont)",
+      "Bash(curl -sL --max-time 60 -o /private/tmp/claude-501/-Users-admin-Documents-Projects-BotsProjects-scikit-automated-trading-system/9c1d37ac-b95f-4102-ab18-5f594756d986/scratchpad/fonts/Montserrat-var.ttf https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf)",
+      "Bash(sed 's|.*/||')",
+      "Bash(curl -sL --max-time 30 -H \"User-Agent: Mozilla/4.0 \\(compatible; MSIE 6.0; Windows NT 5.1\\)\" \"https://fonts.googleapis.com/css?family=Montserrat:400,600,700\")",
+      "Bash(awk '{print $5\" bytes\"}')",
+      "Bash(git diff *)"
     ],
     "additionalDirectories": [
       "/Users/admin/Downloads"

@@ -78,6 +78,7 @@ scripts/tune_thresholds.py 60/20/20 val-tuned threshold search (Step C)
 scripts/baseline_noskill.py same exits, random/fixed direction — how much is the model?
 scripts/inspect_model.py  human-readable view of models/*.pkl incl. provenance
 scripts/live_session.py   live signal->order chain on a demo account (docs/LIVE_DEMO_RUNBOOK.md)
+scripts/make_defence_deck.py  builds docs/DEFENCE_PRESENTATION.pptx (CSC 504 defence, native shapes)
 scripts/make_progress_docx.py one-off: renders the June progress report (needs python-docx)
 docker/engine/            engine + dashboard image (Linux Python, no Wine)
 docker/mt5/               Wine + xvfb + MT5 image — documented DEAD END, see below
@@ -98,6 +99,7 @@ Full setup + runbook for a human (dashboard walkthrough, mock vs live, troublesh
 .venv/bin/python scripts/tune_thresholds.py EURUSD 1h  # Step C
 .venv/bin/python scripts/inspect_model.py              # read the saved models in plain text
 .venv/bin/python scripts/live_session.py EURUSD 1h     # live signal->order, DRY RUN (--send to trade)
+.venv/bin/python scripts/make_defence_deck.py          # rebuild the defence deck (needs python-pptx)
 .venv/bin/python -m streamlit run dashboard/app.py     # dashboard on :8501
 docker compose up engine                               # backtest only, no Wine
 docker compose --profile live up                       # + mt5 container (see DEAD END)

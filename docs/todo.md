@@ -248,10 +248,66 @@ snapshot confirms every documented number is unchanged. **218 tests pass.**
   "No-skill baseline" + "Label/trade alignment". The alignment switches stay OFF.
 
 **Remaining work**
-- [ ] Apply `docs/REPORT_CORRECTIONS.md` to Chapters 1–3 (Word version).
-- [ ] Write Chapters 4 and 5.
-- [ ] Known gaps kept as-is: latency never measured live; Sharpe per-trade;
-  `SIGNAL_LOG_FILE`/`LOG_LEVEL` unused.
+
+### A. Live demo session on the VPS (closes objective 4 + the latency target)
+
+Full protocol: `docs/LIVE_DEMO_RUNBOOK.md`. The VPS also runs gadel **live**, so the
+first two steps are safety, not setup.
+
+- [ ] **Install a SECOND, dedicated MT5 terminal** on the VPS (own folder) and log it
+  into a **demo** account by hand. Enable Algo Trading in the toolbar (else every order
+  returns `10027`).
+- [ ] Set `MT5_TERMINAL_PATH` to that installation's `terminal64.exe`. Without it,
+  `initialize()` attaches to gadel's running terminal and `login()` switches **that**
+  terminal's account. A separate account is NOT sufficient protection.
+- [ ] Keep `MT5_REQUIRE_DEMO=true` and `MT5_ONLY_OWN_POSITIONS=true`. Our magic is
+  `20260917`; gadel's EA base is `20260519` — verified no collision.
+- [ ] `pip install -r requirements.txt` + `requirements-mt5.txt` on the VPS, then
+  `python scripts\run_backtest.py EURUSD 1h` (and GBPUSD) to train models there.
+- [ ] Smoke-test the order path the same day — don't wait days for a real signal:
+  `VOLUME_ZSCORE_THRESHOLD=-5 ... --send --log logs\smoke_test.jsonl`.
+  **Plumbing test only — never quote it as a result.**
+- [ ] Run the real session: `EXECUTION_HANDLER=mt5`,
+  `python scripts\live_session.py EURUSD 1h --send --loop --equity <demo balance>`,
+  both pairs, for 1–2 weeks (expect 1–2 trades per pair per week).
+- [ ] Collect: `grep '"order_sent": true' logs/live_session_*.jsonl`, compute median
+  latency vs the 500 ms target, screenshot MT5 Trade/History (**redact** account number,
+  balance, server).
+
+### B. Chapter 4 — Results and Discussion
+
+- [ ] 4.1 Evaluation setup: data window, the 80/20 chronological split, cost model.
+- [ ] 4.2 Headline results table both pairs + Wilson CIs + targets met (2/4, 3/4).
+- [ ] 4.3 The improvement phase A–F as a cause-and-effect table (`docs/RESULTS.md`).
+- [ ] 4.4 Six negative results, incl. Step F order blocks with the importance finding.
+- [ ] 4.5 No-skill baseline — how much of the win rate is exit geometry (67–69%).
+- [ ] 4.6 Label/trade alignment caveat; 4.7 live execution + latency (from §A).
+- [ ] 4.8 Limitations: per-trade Sharpe, ~30 trades, 4.8-month window, 2 pairs.
+- [ ] Figures/listings: `docs/CHAPTER_4_FIGURES.md` has each slot + its command.
+
+### C. Chapter 5 — Summary, Conclusion and Recommendations
+
+- [ ] 5.1 Summary of the work; 5.2 contributions (the six on the deck's slide);
+  5.3 conclusion; 5.4 recommendations/future work (label alignment, meta-labelling,
+  more pairs/timeframes); 5.5 the Wine finding as a deployment contribution.
+
+### D. Report and presentation
+
+- [ ] Apply `docs/REPORT_CORRECTIONS.md` to Chapters 1–3 (Word version) — the 5 A-items
+  first, then one short "Deviations from the initial design" subsection for the rest.
+- [ ] Defence deck: `docs/DEFENCE_PRESENTATION.pptx` (regenerate with
+  `scripts/make_defence_deck.py`). Fill the 6 screenshot placeholders; add the
+  supervisor's name on the title slide.
+- [ ] Capture screenshots: backtest terminal output, dashboard at :8501, live session
+  output, MT5 Trade/History, gadel dashboard, waitlist count. **Redact** account
+  numbers, balances, server hostnames, tokens, names and emails.
+- [ ] Rehearse against `docs/DEFENCE_GUIDE.md`.
+
+### E. Known gaps kept as-is (state them, don't hide them)
+
+- [ ] Latency measured only on a demo account (closed by §A, but small N).
+- [ ] Sharpe is per-trade and unannualised.
+- [ ] `SIGNAL_LOG_FILE` / `LOG_LEVEL` defined but unused.
 
 ---
 
