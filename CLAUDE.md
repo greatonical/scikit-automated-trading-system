@@ -127,7 +127,11 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
   `docs/WINE_VERDICT.md` before touching `docker/mt5/`. Deployment path: native Windows
   host running `python -m src.execution.mt5_service`, engine on `EXECUTION_HANDLER=remote_mt5`
   with a shared `MT5_RPC_TOKEN`.
-- **Not under version control.** No git repo exists yet.
+- **Under version control.** Branch `main`, remote `origin` →
+  `github.com/greatonical/scikit-automated-trading-system`. `.env`, `models/` and
+  `logs/` stay ignored (`.env` has never been committed — verified 2026-09-17), but the
+  cached `data/*_1h.parquet` are force-added on purpose: every documented number depends
+  on that exact window.
 - **Chapters 4 and 5 of the report are unwritten.** Material is in `docs/RESULTS.md` and
   `docs/STRATEGY_CONFIGS.md`; Chapters 1–3 corrections are in `docs/REPORT_CORRECTIONS.md`.
 
