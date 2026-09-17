@@ -98,6 +98,7 @@ so all are off by default with the code kept for reproducibility.
 | ATR (feature / stops) | No | B3 — neutral / harmful ❌ |
 | Higher-timeframe trend | No | B4 — helps EUR, hurts GBP ❌ |
 | Time-of-day / session | No | D — helps EUR, hurts GBP ❌ |
+| Order blocks (zone proximity) | Yes (§1.8, §2.4, §2.5; Sirignano & Cont) | F — helps GBP at the default exits, hurts the other three combinations ❌ |
 
 ## Execution and deployment
 

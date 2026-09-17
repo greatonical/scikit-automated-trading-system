@@ -165,6 +165,22 @@ USE_ATR_STOPS = _env_str("USE_ATR_STOPS", "false").lower() == "true"
 ATR_SL_MULTIPLE = _env_float("ATR_SL_MULTIPLE", 5.0)
 ATR_TP_MULTIPLE = _env_float("ATR_TP_MULTIPLE", 10.0)
 
+# Order blocks (Step F): the zone a market leaves behind when price breaks structure —
+# the "institutional order block" idea the report's literature review cites (Sirignano &
+# Cont, 2019) and §2.5 promises. Detection follows the rule set a sibling production
+# system uses: a break of structure must be confirmed by a CLOSE beyond the recent swing,
+# the zone is the extreme candle of that window, it is rejected if it is large relative to
+# ATR (or too small to be meaningful), and it is consumed once price trades back into it.
+# Exposed as FEATURES for the Random Forest — the volume gate and the hybrid AND-logic are
+# unchanged — so this is one measurable change, like every other indicator tested.
+USE_ORDER_BLOCKS = _env_str("USE_ORDER_BLOCKS", "false").lower() == "true"
+OB_SWING_LOOKBACK = _env_int("OB_SWING_LOOKBACK", 10)    # bars defining the swing
+OB_ATR_PERIOD = _env_int("OB_ATR_PERIOD", 10)            # ATR used for the size filter
+OB_MAX_ATR_MULTIPLE = _env_float("OB_MAX_ATR_MULTIPLE", 3.5)   # reject zones wider than this
+OB_MIN_SIZE_PCT = _env_float("OB_MIN_SIZE_PCT", 0.0003)  # reject zones thinner than 0.03%
+OB_MAX_ACTIVE_AGE = _env_int("OB_MAX_ACTIVE_AGE", 200)   # bars a zone stays live
+OB_DIST_CAP = _env_float("OB_DIST_CAP", 0.02)            # clip the distance feature at ±2%
+
 # Higher-timeframe trend (Step B4): trend CONTEXT, not an oscillator. Adds two
 # features — TrendDist (how far price is above/below a long moving average, as a
 # fraction) and TrendUp (1 if price is above the long MA, else 0). The long MA on
@@ -182,6 +198,8 @@ if USE_ATR:
     FEATURE_COLUMNS.append("ATR")
 if USE_HTF_TREND:
     FEATURE_COLUMNS += ["TrendDist", "TrendUp"]
+if USE_ORDER_BLOCKS:
+    FEATURE_COLUMNS += ["OB_BullDist", "OB_BearDist", "OB_Inside"]
 
 # Time-of-day / session (Step D, optional): hour of day + a London/NY-overlap flag.
 # FX behaviour varies by session; cheap features, sometimes useful.

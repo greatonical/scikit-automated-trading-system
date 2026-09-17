@@ -180,6 +180,15 @@ by different methods, on different instruments.
    trades KEPT were better than the trades SKIPPED" — net profit and drawdown improve
    merely by trading less. This is exactly why our no-skill baseline compares PF, not
    just win rate.
+7. **Their order-block rules — borrowed and measured (done 2026-09-17).** Their EA trades
+   SMC order blocks, and our report's §2.5 promises order-block identification, so their
+   rule set (break of structure confirmed by a *close*, ATR-filtered zone size, zone dies
+   on mitigation) was reimplemented here as three Random Forest features and measured on
+   both pairs — Step F in `docs/RESULTS.md`. It improved only GBP/USD at the default
+   exits, so it ships off (`USE_ORDER_BLOCKS=false`). Their own live numbers point the
+   same way: the order-block engine runs at PF 1.05–1.12 with 37–52% drawdown, and fleet
+   expectancy is negative. Borrowing the *rules* was cheap and informative; borrowing the
+   *claim* that order blocks work would not have been.
 
 ## 7. What this project has that theirs doesn't
 

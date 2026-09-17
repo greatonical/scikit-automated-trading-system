@@ -56,6 +56,17 @@ question the strategy actually cares about. Both pairs flipped from loss to prof
 ATR, higher-timeframe trend and time-of-day were each added alone and measured on both
 pairs. None improved both. The code is kept, switched off.
 
+**"Your literature review talks about order blocks — where are they?"** — Implemented and
+measured, then switched off on the evidence (Step F). A zone is created when a candle
+*closes* beyond the recent swing, is filtered by ATR size, and dies when price trades back
+into it; the model receives the distance to the nearest bullish and bearish zone plus an
+"inside a zone" flag. The Random Forest genuinely used them — about 20% of total feature
+importance — but they improved only GBP/USD at the default exits and hurt the other three
+pair/config combinations, so they stay off. The most interesting detail: the "price is
+inside a zone" flag, which is the part discretionary traders actually trade, scored 0.001
+importance, because price is inside a live zone on only ~3.5% of bars. What the model used
+was *proximity* to a zone, not the zone as a trigger.
+
 **"Why Random Forest and not an LSTM?"** — CPU-only hardware, resistance to overfitting
 through ensemble averaging, and interpretability via feature importances. Deep learning is
 reviewed and rejected in Chapter 2, not ignored.

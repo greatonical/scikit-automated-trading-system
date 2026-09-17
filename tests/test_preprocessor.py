@@ -420,6 +420,110 @@ def test_add_indicators_appends_atr_when_enabled(pre, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
+# Order blocks (Step F) — zone detection, strictly causal
+# --------------------------------------------------------------------------- #
+def _ob(pre, df, **kw):
+    # dist_cap is deliberately wider than the real 2% here, so these fixtures
+    # exercise the true distance rather than the clip.
+    defaults = dict(lookback=3, max_atr_multiple=10.0, min_size_pct=0.0,
+                    max_age=100, dist_cap=0.05)
+    defaults.update(kw)
+    atr = pre._atr(df["High"], df["Low"], df["Close"], 3)
+    return pre._order_blocks(
+        df["High"].to_numpy(), df["Low"].to_numpy(), df["Close"].to_numpy(),
+        atr.to_numpy(), **defaults,
+    )
+
+
+def _ohlc(rows) -> pd.DataFrame:
+    """rows: list of (high, low, close)."""
+    idx = pd.date_range("2024-01-01", periods=len(rows), freq="1h", tz="UTC")
+    return pd.DataFrame(
+        {"Open": [r[2] for r in rows], "High": [r[0] for r in rows],
+         "Low": [r[1] for r in rows], "Close": [r[2] for r in rows],
+         "Volume": [1000.0] * len(rows)},
+        index=idx,
+    )
+
+
+def _break_out_sequence():
+    """Four flat bars, a dip, then a candle closing above the swing high."""
+    return _ohlc([
+        (1.010, 1.000, 1.005),
+        (1.010, 1.000, 1.005),
+        (1.010, 1.000, 1.005),
+        (1.004, 0.990, 0.995),   # the dip — lowest low, becomes the zone
+        (1.030, 1.000, 1.025),   # closes above the swing high -> bullish break
+        (1.030, 1.020, 1.025),
+        (1.030, 1.020, 1.025),
+    ])
+
+
+def test_order_block_forms_on_a_close_beyond_the_swing(pre):
+    df = _break_out_sequence()
+    bull, _, inside = _ob(pre, df)
+    # No zone exists until the break candle has closed...
+    assert bull[4] == pytest.approx(0.05)          # cap = "nothing nearby"
+    # ...and from the next bar the dip candle (high 1.004) is the zone below price.
+    assert bull[5] == pytest.approx((1.025 - 1.004) / 1.025, rel=1e-6)
+    assert inside[5] == 0.0                        # price is above the zone, not in it
+
+
+def test_order_block_is_consumed_once_price_returns_into_it(pre):
+    rows = _break_out_sequence().values.tolist()
+    df = _ohlc([(r[1], r[2], r[3]) for r in rows] + [
+        (1.030, 1.000, 1.002),   # trades back into the zone -> mitigated
+        (1.030, 1.020, 1.025),
+    ])
+    bull, _, _ = _ob(pre, df)
+    assert bull[-1] == pytest.approx(0.05)         # zone gone, so "nothing nearby"
+
+
+def test_oversized_zone_is_rejected(pre):
+    df = _break_out_sequence()
+    # An ATR multiple of ~0 rejects every candidate zone.
+    bull, _, _ = _ob(pre, df, max_atr_multiple=0.01)
+    assert bull[5] == pytest.approx(0.05)
+
+
+def test_distance_feature_is_clipped(pre):
+    """The real config caps the distance at ±2% so one far-away zone can't dominate."""
+    df = _break_out_sequence()
+    bull, _, _ = _ob(pre, df, dist_cap=0.001)
+    assert bull[5] == pytest.approx(0.001)
+
+
+def test_order_block_features_are_trailing_no_lookahead(pre):
+    df = _ohlc([(1.0 + 0.004 * np.sin(i / 3), 1.0 - 0.004 * np.sin(i / 3),
+                 1.0 + 0.002 * np.sin(i / 2)) for i in range(120)])
+    full = _ob(pre, df)
+    t = 80
+    trunc = _ob(pre, df.iloc[: t + 1])
+    for f, tr in zip(full, trunc):
+        assert f[t] == pytest.approx(tr[t], rel=1e-12, nan_ok=True)
+
+
+def test_add_indicators_appends_order_blocks_when_enabled(pre, monkeypatch):
+    monkeypatch.setattr(settings, "USE_ORDER_BLOCKS", True)
+    out = pre.add_indicators(_ohlcv(120))
+    for col in ["OB_BullDist", "OB_BearDist", "OB_Inside"]:
+        assert col in out.columns
+
+
+def test_transform_includes_order_blocks_when_in_features(monkeypatch):
+    monkeypatch.setattr(settings, "USE_ORDER_BLOCKS", True)
+    pre = Preprocessor(
+        zscore_window=10, label_method="next_candle",
+        feature_columns=settings.BASE_FEATURE_COLUMNS
+        + ["OB_BullDist", "OB_BearDist", "OB_Inside"],
+    )
+    out = pre.transform(_ohlcv(300))
+    for col in ["OB_BullDist", "OB_BearDist", "OB_Inside"]:
+        assert not out[col].isna().any()
+    assert set(out["OB_Inside"].unique()).issubset({-1.0, 0.0, 1.0})
+
+
+# --------------------------------------------------------------------------- #
 # Higher-timeframe trend feature (Step B4) — backward-looking
 # --------------------------------------------------------------------------- #
 def test_htf_trend_up_flag_matches_ma(pre):

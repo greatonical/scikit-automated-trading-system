@@ -51,10 +51,17 @@ the implementation; **C** = presentation / completeness.
    reduced win rate and profit factor on both pairs. → Reword, or say the literature
    motivated testing them and report that the test failed (a good result to own).
 
-4. **"Order block" identification** (§1.8 definition, §2.4 gap 3, §2.5). The report
-   describes "deterministic rule-based order block identification". Nothing in the
-   system identifies order blocks; the rule layer is a volume-anomaly filter. → Remove
-   or reframe as related work.
+4. **"Order block" identification** (§1.8 definition, §2.4 gap 3, §2.5).
+   **Updated 2026-09-17 — this is now partly true, and the honest version is better than
+   deletion.** Order blocks *have* been implemented (break of structure confirmed by a
+   close, ATR-filtered zone, consumed on mitigation) and given to the Random Forest as
+   three features. Measured on both pairs, they improved only GBP/USD at the default
+   exits and hurt the other three pair/config combinations, so they are **off by
+   default** (`docs/RESULTS.md`, Step F).
+   → Keep the concept in §1.8 and §2.4, and rewrite §2.5: the system does **not** trade
+   order blocks as a rule layer — the rule layer is the volume-anomaly filter — but order
+   blocks were implemented and tested as model features and rejected on the evidence.
+   Report it in Chapter 4 as a measured negative result; it is stronger than a claim.
 
 5. **Table 3.1.** The "Algorithmic Action" column triggers a BUY on a Close Z-Score of
    −2.45 and flags "Overbought"/"Reversion" on Close Z-Scores. The implemented system

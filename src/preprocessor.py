@@ -132,6 +132,20 @@ class Preprocessor:
             dist, up = self._htf_trend(out["Close"], settings.HTF_TREND_WINDOW)
             out["TrendDist"] = dist
             out["TrendUp"] = up
+        if settings.USE_ORDER_BLOCKS:
+            atr = self._atr(out["High"], out["Low"], out["Close"], settings.OB_ATR_PERIOD)
+            bull, bear, inside = self._order_blocks(
+                out["High"].to_numpy(), out["Low"].to_numpy(), out["Close"].to_numpy(),
+                atr.to_numpy(),
+                lookback=settings.OB_SWING_LOOKBACK,
+                max_atr_multiple=settings.OB_MAX_ATR_MULTIPLE,
+                min_size_pct=settings.OB_MIN_SIZE_PCT,
+                max_age=settings.OB_MAX_ACTIVE_AGE,
+                dist_cap=settings.OB_DIST_CAP,
+            )
+            out["OB_BullDist"] = pd.Series(bull, index=out.index)
+            out["OB_BearDist"] = pd.Series(bear, index=out.index)
+            out["OB_Inside"] = pd.Series(inside, index=out.index)
         if settings.USE_TIME_FEATURES:
             # Hours in UTC — the session window below is defined in UTC.
             idx = out.index
@@ -142,6 +156,78 @@ class Preprocessor:
             # London/NY overlap (~12:00–16:00 UTC) — the most active FX window.
             out["SessionOverlap"] = ((hour >= 12) & (hour < 16)).astype("float")
         return out
+
+    @staticmethod
+    def _order_blocks(high, low, close, atr, *, lookback, max_atr_multiple,
+                      min_size_pct, max_age, dist_cap):
+        """Nearest unmitigated order-block zones, as three trailing features.
+
+        A zone is created when a candle **closes** beyond the recent swing (a break of
+        structure). The zone itself is the extreme candle of that window — the lowest
+        low for a bullish break, the highest high for a bearish one — taken as its full
+        high-to-low range. A zone is discarded if it is wider than ``max_atr_multiple``
+        × ATR (a panic candle, not a resting order zone) or thinner than
+        ``min_size_pct`` of price (noise). It stays live until price trades back into it
+        ("mitigation") or it ages out.
+
+        No lookahead: each bar's features are computed from zones created on STRICTLY
+        earlier bars, and a zone is only created once its break candle has closed.
+
+        Returns ``(bull_dist, bear_dist, inside)`` — distance from the close to the
+        nearest bullish/bearish zone as a fraction of price (clipped at ``dist_cap``),
+        and +1 / −1 / 0 for price sitting inside a bullish / bearish zone / neither.
+        """
+        n = len(close)
+        bull_dist = np.full(n, np.nan)
+        bear_dist = np.full(n, np.nan)
+        inside = np.full(n, np.nan)
+        bull_zones: list[tuple[float, float, int]] = []   # (bottom, top, created_at)
+        bear_zones: list[tuple[float, float, int]] = []
+
+        for i in range(n):
+            # Zones expire with age.
+            bull_zones = [z for z in bull_zones if i - z[2] <= max_age]
+            bear_zones = [z for z in bear_zones if i - z[2] <= max_age]
+
+            # 1) Features for this bar, from zones that already existed.
+            if i > lookback and not np.isnan(atr[i]):
+                c = close[i]
+                in_bull = in_bear = False
+                if bull_zones:
+                    z = min(bull_zones, key=lambda z: abs(c - z[1]))
+                    bull_dist[i] = float(np.clip((c - z[1]) / c, -dist_cap, dist_cap))
+                    in_bull = z[0] <= c <= z[1]
+                else:
+                    bull_dist[i] = dist_cap          # nothing nearby
+                if bear_zones:
+                    z = min(bear_zones, key=lambda z: abs(z[0] - c))
+                    bear_dist[i] = float(np.clip((z[0] - c) / c, -dist_cap, dist_cap))
+                    in_bear = z[0] <= c <= z[1]
+                else:
+                    bear_dist[i] = dist_cap
+                inside[i] = 1.0 if in_bull else (-1.0 if in_bear else 0.0)
+
+            # 2) Mitigation: price traded back into a zone during this bar.
+            bull_zones = [z for z in bull_zones if low[i] > z[1]]
+            bear_zones = [z for z in bear_zones if high[i] < z[0]]
+
+            # 3) A break of structure closing this bar leaves a zone for LATER bars.
+            if i >= lookback and not np.isnan(atr[i]):
+                window_high = high[i - lookback:i].max()
+                window_low = low[i - lookback:i].min()
+                j = None
+                if close[i] > window_high:           # bullish break of structure
+                    j = int(np.argmin(low[i - lookback:i + 1])) + i - lookback
+                    zones = bull_zones
+                elif close[i] < window_low:          # bearish break of structure
+                    j = int(np.argmax(high[i - lookback:i + 1])) + i - lookback
+                    zones = bear_zones
+                if j is not None:
+                    size = high[j] - low[j]
+                    if min_size_pct * close[i] <= size <= max_atr_multiple * atr[i]:
+                        zones.append((low[j], high[j], i))
+
+        return bull_dist, bear_dist, inside
 
     @staticmethod
     def _htf_trend(close: pd.Series, window: int):

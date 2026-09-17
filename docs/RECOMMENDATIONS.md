@@ -32,8 +32,8 @@ for future work. Kept short on purpose. (Updated 2026-09-15 after the full audit
 **Done (measured in docs/RESULTS.md):**
 - Risk management, the volume gate, spread/slippage modelling.
 - Triple-barrier label (the decisive profitability fix).
-- RSI, MACD, ATR, higher-timeframe trend, time-of-day — tested one at a time, none
-  improved both pairs.
+- RSI, MACD, ATR, higher-timeframe trend, time-of-day, order blocks — tested one at a
+  time, none improved both pairs.
 - Validation-selected threshold tuning — too few validation trades to trust.
 - Exit-geometry frontier, no-skill baseline, label/trade-alignment experiments.
 

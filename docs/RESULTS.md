@@ -56,6 +56,8 @@ Targets (README §8): Win Rate > 60% · Profit Factor > 1.5 · Max Drawdown < 15
 | **E ★default** | **close TP (SL 1.2 / TP 0.4)** | **73.3%** ✅ [56–86] | 1.34 | +$257 | 1.5% ✅ | 0.13 | 30 |
 | E (alt) | symmetric 1:1 (SL/TP 0.6) | 44.1% [29–61] | 1.19 | +$370 | 4.3% ✅ | 0.09 | 34 |
 | E (alt) | far TP 1:2 (SL 0.5 / TP 1.0) = Step A | 36.8% [19–59] | 1.42 | +$576 | 4.4% ✅ | 0.16 | 19 |
+| F ‡ | + order blocks ❌ reverted | 71.0% [53–84] | 1.21 | +$179 | 1.6% ✅ | 0.09 | 31 |
+| F ‡ | + order blocks, far-TP exits ❌ | 30.0% [14–53] | 1.09 | +$141 | 4.4% ✅ | 0.04 | 20 |
 
 ## GBPUSD 1h
 
@@ -74,6 +76,11 @@ Targets (README §8): Win Rate > 60% · Profit Factor > 1.5 · Max Drawdown < 15
 | **E ★default** | **close TP (SL 1.2 / TP 0.4)** | **78.4%** ✅ [63–89] | **1.62** ✅ | +$532 | 2.5% ✅ | 0.22 | 37 |
 | E (alt) | symmetric 1:1 (SL/TP 0.6) | 60.0% [41–77] (not > 60%) | 1.92 ✅ | +$1,021 | 4.3% ✅ | 0.31 | 25 |
 | E (alt) | far TP 1:2 (SL 0.5 / TP 1.0) = Step A | 50.0% [28–72] | 2.42 ✅ | +$1,307 | 2.7% ✅ | 0.38 | 16 |
+| F ‡ | + order blocks ❌ reverted | 79.1% [65–89] | 1.77 ✅ | +$749 | 2.1% ✅ | 0.26 | 43 |
+| F ‡ | + order blocks, far-TP exits ❌ | 36.8% [19–59] | 1.78 ✅ | +$1,012 | 5.4% ✅ | 0.24 | 19 |
+
+‡ Step F was measured at the **★default close-TP exits** (and repeated at far-TP), not at
+the Step A exits used for B1–D — so compare each F row with the E row above it.
 
 † Re-measured 2026-09-15 after a fix — see the Step C and Step D notes. Every other row was
 re-run on 2026-09-15 with the command in [Reproducibility](#reproducibility) and matched
@@ -266,6 +273,59 @@ Two findings:
 
 ---
 
+## Step F — order blocks as features (2026-09-17) ❌ not adopted
+
+The report's literature review cites institutional order blocks (Sirignano & Cont, 2019)
+and §2.5 promises "rule-based order block identification", but nothing in the system
+detected them. Rather than delete the claim, it was **implemented and measured**.
+
+**What was built** (`Preprocessor._order_blocks`, `USE_ORDER_BLOCKS`): a zone is created
+when a candle **closes** beyond the recent swing — a break of structure, confirmed by a
+close and not a wick. The zone is the extreme candle of that window (lowest low for a
+bullish break, highest high for a bearish one), taken as its full high-to-low range. It is
+discarded if wider than 3.5 × ATR (a panic candle, not a resting zone) or thinner than
+0.03% of price, and it dies once price trades back into it (mitigation) or ages out after
+200 bars. These rules follow those a sibling production system runs live
+(`docs/GADEL_ENGINE_COMPARISON.md`). Three features reach the Random Forest: distance to
+the nearest live bullish zone, distance to the nearest bearish zone, and a ±1 flag for
+price sitting inside one. **The volume gate and the hybrid AND-logic are unchanged** — this
+is a feature test, exactly like RSI or MACD, not a new strategy. Detection is strictly
+causal: a zone is visible only to bars after its break candle closed, and a test asserts
+that truncating the future leaves past values unchanged.
+
+**Results** (vs the row above each, same exits):
+
+| Config | Pair | Win rate | PF | Net | Verdict |
+|--------|------|----------|----|-----|---------|
+| close-TP ★ | EUR/USD | 73.3% → **71.0%** | 1.34 → **1.21** | +$257 → **+$179** | worse |
+| close-TP ★ | GBP/USD | 78.4% → **79.1%** | 1.62 → **1.77** | +$532 → **+$749** | better |
+| far-TP | EUR/USD | 36.8% → **30.0%** | 1.42 → **1.09** | +$576 → **+$141** | worse |
+| far-TP | GBP/USD | 50.0% → **36.8%** | 2.42 → **1.78** | +$1,307 → **+$1,012** | worse |
+
+**Verdict: reverted, `USE_ORDER_BLOCKS=false`.** It helps GBP/USD at the default exits and
+hurts everything else — better on 1 of 4 pair/config combinations. That is the same pattern
+as RSI, MACD, ATR, higher-timeframe trend and time-of-day: a feature that improves one pair
+and damages the other doesn't generalise, so it isn't adopted for a shared default.
+
+**What makes this result more interesting than the earlier rejections:**
+- **The model did use the features.** They carry **19.7%** (EUR/USD) and **22.0%**
+  (GBP/USD) of total feature importance — this is not a case of the Random Forest ignoring
+  an input, as happened with ATR in Step B3a.
+- **The textbook part is the useless part.** The "price is inside a zone" flag — the thing
+  discretionary traders actually watch — scored **0.001** importance on both pairs. Price
+  sits inside a live zone on only 3.5–3.7% of bars (7.4–8.6% of volume-gated bars), so it
+  is almost always zero. What the model used was the continuous *distance* to the nearest
+  zone, i.e. order blocks as a proximity signal rather than as an entry trigger.
+- It is consistent with the sibling system's own live measurements, where the order-block
+  engine runs at profit factor 1.05–1.12 with 37–52% drawdown and negative fleet-wide
+  expectancy. Using order blocks somewhere is not evidence that they work.
+
+For the report this converts a false claim into a measured one: order blocks were
+implemented to a standard specification, given to the model, and **did not improve results
+on both pairs**. The code and its tests are kept; the switch is off.
+
+---
+
 ## No-skill baseline
 
 *The question an examiner will ask: is the 73–78% win rate the model's doing?*
@@ -385,9 +445,9 @@ horizon were chosen on 1h.)
 
 Two distinct wins, each targeting a different metric — and one important qualification:
 - **Triple-barrier label (Step A)** flipped both pairs from net loss to **profit** —
-  the decisive change for *profitability*. No added indicator (RSI, MACD, ATR, trend,
-  time-of-day) beat it on both pairs; threshold tuning rests on too few validation trades
-  to be trusted.
+  the decisive change for *profitability*. No added feature (RSI, MACD, ATR, trend,
+  time-of-day, order blocks) beat it on both pairs; threshold tuning rests on too few
+  validation trades to be trusted.
 - **Exit geometry (Step E)** exposes the win-rate / risk-reward trade-off and lets the
   system **meet the report's win-rate target**. The **close-TP default (SL 1.2 / TP 0.4)**
   reaches 73% (EUR/USD) / 78% (GBP/USD) — the only config meeting > 60% on both pairs —
@@ -419,6 +479,7 @@ TimeSeriesSplit on the training set only) and one cost model (`BACKTEST_SPREAD` 
 | Baseline | `LABEL_METHOD=next_candle DEFAULT_STOP_LOSS_PCT=0.005 DEFAULT_TAKE_PROFIT_PCT=0.010 run` |
 | A (= far-TP) | `DEFAULT_STOP_LOSS_PCT=0.005 DEFAULT_TAKE_PROFIT_PCT=0.010 run` |
 | B1 / B2 / B3a / B4 / D | the Step A prefix + `USE_RSI=true` / `USE_MACD=true` / `USE_ATR=true` / `USE_HTF_TREND=true` / `USE_TIME_FEATURES=true` |
+| F (order blocks) | `USE_ORDER_BLOCKS=true run` (and the same with the far-TP prefix) |
 | B3b | Step A prefix + `USE_ATR=true USE_ATR_STOPS=true ATR_SL_MULTIPLE=1.5 ATR_TP_MULTIPLE=3.0` |
 | B3b′ | Step A prefix + `USE_ATR=true USE_ATR_STOPS=true` (5×/10× defaults) |
 | C | `.venv/bin/python scripts/tune_thresholds.py EURUSD 1h` |

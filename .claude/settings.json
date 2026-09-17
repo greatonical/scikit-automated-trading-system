@@ -27,7 +27,8 @@
       "Bash(cp \"/Users/admin/Downloads/GABRIEL AWOSUSI PROJECT REPORT \\(CHAPTER 1-3\\).md\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && grep -c \"FOR THE FOREIGN EXCHANGE MARKET\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && grep -c \"REFERENCES\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && rm \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3_corrected.md\" && echo \"current copy in place, stale copy removed\" && ls *.md)",
       "Bash(git init *)",
       "Bash(git config *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git rev-list *)"
     ],
     "additionalDirectories": [
       "/Users/admin/Downloads"

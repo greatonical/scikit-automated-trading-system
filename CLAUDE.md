@@ -105,8 +105,12 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
 ## Current state (verified 2026-09-15)
 
 - **Modules 1–11 complete**, 218 tests pass, everything documented in `docs/`.
-- **Improvement phase A–E complete + full audit done** (`docs/AUDIT_2026-09-15.md`).
+- **Improvement phase A–F complete + full audit done** (`docs/AUDIT_2026-09-15.md`).
   Default config = triple-barrier label (Step A) + close-TP exits (Step E, `SL 1.2% / TP 0.4%`).
+- **Order blocks are implemented and rejected on evidence** (Step F, 2026-09-17):
+  break-of-structure zones as three RF features (`USE_ORDER_BLOCKS`, off). The model uses
+  them (~20% of importance) but they improve only GBP/USD at the default exits. Keep the
+  code and the tests — the report's order-block claims now rest on a measured result.
 - Held-out results with costs, 1h (test 20 Jan → 12 Jun 2026):
   **EUR/USD 73.3% win [55.6–85.8] / PF 1.34 / DD 1.5%**,
   **GBP/USD 78.4% win [62.8–88.6] / PF 1.62 / DD 2.5%**. Win-rate and drawdown targets

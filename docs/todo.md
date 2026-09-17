@@ -189,7 +189,9 @@ pairs after every step to build a cause-and-effect table for the report.
 - [x] **D. + Time-of-day/session** ❌ REVERTED — originally measured with London-time hours (EUR PF 1.42→1.56, GBP 2.42→1.97); **re-measured 2026-09-15 with UTC hours**: EUR 1.42→1.72, GBP 2.42→1.96. Same conclusion — doesn't improve both. `USE_TIME_FEATURES=false`.
 - [x] **★ E. Win-rate-first exits (SL 1.2% / TP 0.4%) — ADOPTED AS DEFAULT.** Close TP + wide stop → win rate **73.3% (EUR) / 78.4% (GBP)**, both CLEAR §8 >60% target, still profitable (PF 1.34/1.62, DD <3%). Honest, leakage-free (label + RiskManager share SL/TP). Trade-off (smaller reward/trade) + full sweep in `docs/RESULTS.md`. `scripts/sweep_winrate.py`.
 
-**✅ IMPROVEMENT PHASE COMPLETE (A–D 2026-06-16, E 2026-06-18).** Default config = **Step A (triple-barrier label) + Step E close-TP exits (SL 1.2% / TP 0.4%)**. Triple-barrier was the decisive change (loss→profit both pairs); no indicator improved both pairs; threshold tuning rests on too few validation trades to trust (Step C re-measured 2026-09-15). Full table + conclusion in `docs/RESULTS.md`.
+- [x] **F. + Order blocks** ❌ REVERTED — break-of-structure zones (close-confirmed, ATR-filtered, mitigation-consumed) as three RF features. Helps GBP/USD at the default exits (PF 1.62→1.77) but hurts EUR/USD (1.34→1.21) and hurts both at far-TP. The model *did* use them (~20% of feature importance), but the textbook "inside a zone" flag scored 0.001 — price is inside a live zone only ~3.5% of bars. `USE_ORDER_BLOCKS=false`, code + tests kept. Full write-up in `docs/RESULTS.md` Step F.
+
+**✅ IMPROVEMENT PHASE COMPLETE (A–D 2026-06-16, E 2026-06-18, F 2026-09-17).** Default config = **Step A (triple-barrier label) + Step E close-TP exits (SL 1.2% / TP 0.4%)**. Triple-barrier was the decisive change (loss→profit both pairs); no indicator improved both pairs; threshold tuning rests on too few validation trades to trust (Step C re-measured 2026-09-15). Full table + conclusion in `docs/RESULTS.md`.
 
 ### ⏸ RESUME POINT (updated 2026-09-15)
 Coding is complete; the 2026-09-15 audit fixed everything listed in §14 below. Next:
