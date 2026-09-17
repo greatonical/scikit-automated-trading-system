@@ -14,6 +14,7 @@ the last mile and must never block the engine or the backtest results.
 - `docs/DEVIATIONS_FROM_SPEC.md` — every change vs the README/report, with reasons.
 - `docs/RECOMMENDATIONS.md` — weaknesses + how to improve.
 - `docs/TRIPLE_BARRIER_EXPLAINED.md`, `docs/MT5_INTEGRATION_PLAN.md`, `docs/MT5_CONTAINER_TESTING.md`.
+- `docs/CHAPTER_4_FIGURES.md` — figure/listing/table slots for Chapter 4, with the command that produces each.
 - `docs/COMMANDS.md` — setup, every command, dashboard walkthrough, mock vs live, troubleshooting.
 - `docs/DEFENCE_GUIDE.md` — viva answers + how to run/demo the system.
 - `docs/STRATEGY_CONFIGS.md` — the three exit profiles side by side.
