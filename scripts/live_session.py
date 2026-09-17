@@ -274,13 +274,18 @@ def main() -> None:
                          "demo account's real balance")
     ap.add_argument("--max-trades", type=int, default=5,
                     help="stop after this many orders in one session (default 5)")
+    ap.add_argument("--log", type=Path, default=None,
+                    help="session log path (default logs/live_session_<PAIR>_<TF>.jsonl). "
+                         "Use a scratch path for plumbing tests so the real evidence log "
+                         "stays clean.")
     args = ap.parse_args()
 
     pre = Preprocessor()
     model = load_model(args.pair, args.timeframe)
     sg = SignalGenerator()
     rm = RiskManager(starting_equity=args.equity)
-    log_path = log_path_for(args.pair, args.timeframe)
+    log_path = args.log or log_path_for(args.pair, args.timeframe)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"=== Live session: {args.pair} {args.timeframe} ===")
     print(f"  handler        : {settings.EXECUTION_HANDLER}"

@@ -405,6 +405,21 @@ FX_STANDARD_LOT_UNITS = 100_000
 # Max price deviation (points) MT5 may fill a market order away from the request.
 MT5_DEVIATION_POINTS = 20
 
+# WHICH MT5 installation to attach to. `MetaTrader5.initialize()` with no path
+# attaches to whichever terminal is ALREADY RUNNING (or the last one used), and
+# `mt5.login()` then switches THAT terminal's account. On a host that also runs a
+# live trading system, both are dangerous: it can hijack the live terminal and
+# knock its EA off its account. Point this at a SEPARATE terminal installation
+# (ideally a portable one) dedicated to this project's demo account.
+# Empty = let MT5 choose, which is only safe on a machine with exactly one terminal.
+MT5_TERMINAL_PATH = _env_str("MT5_TERMINAL_PATH", "")
+
+# Refuse to trade anything that is not a DEMO account (README §9). Checked from
+# account_info().trade_mode immediately after login; a real/contest account aborts
+# the connection before a single order can be sent. Leave this on — it is the last
+# line of defence against pointing the system at real money.
+MT5_REQUIRE_DEMO = _env_str("MT5_REQUIRE_DEMO", "true").lower() == "true"
+
 # Magic number stamped on every order this system places. MT5 reports magic 0 for
 # trades a human placed by hand in the terminal, so this is what tells our positions
 # apart from the account owner's. (A sibling project filed 15 manual trades against a

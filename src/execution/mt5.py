@@ -81,7 +81,15 @@ class MT5ExecutionHandler(ExecutionHandler):
                 "Missing MT5 demo credentials. Set MT5_LOGIN/PASSWORD/SERVER in .env."
             )
 
-        if not mt5.initialize():
+        # Attach to a SPECIFIC terminal when configured. With no path, MT5 attaches
+        # to whichever terminal is already running — on a host that also runs a live
+        # system that is the live terminal, and the login() below would then switch
+        # THAT terminal's account. See MT5_TERMINAL_PATH in config/settings.py.
+        init_kwargs = {}
+        if settings.MT5_TERMINAL_PATH:
+            init_kwargs["path"] = settings.MT5_TERMINAL_PATH
+            logger.info("Attaching to MT5 terminal at %s", settings.MT5_TERMINAL_PATH)
+        if not mt5.initialize(**init_kwargs):
             raise RuntimeError(f"MT5 initialize() failed: {mt5.last_error()}")
 
         authorized = mt5.login(
@@ -90,6 +98,10 @@ class MT5ExecutionHandler(ExecutionHandler):
         if not authorized:
             mt5.shutdown()
             raise RuntimeError(f"MT5 login failed: {mt5.last_error()}")
+
+        # Demo-only guard runs BEFORE connected=True, so no order can be placed on a
+        # live account even if everything else is misconfigured (README §9).
+        self._assert_demo_account(mt5)
 
         self.connected = True
         logger.info("MT5 connected: login=%s server=%s", self.login, self.server)
@@ -100,6 +112,47 @@ class MT5ExecutionHandler(ExecutionHandler):
             self._mt5.shutdown()
         self.connected = False
         logger.info("MT5 disconnected.")
+
+    @staticmethod
+    def _assert_demo_account(mt5) -> None:
+        """Abort unless the logged-in account is a DEMO account (README §9).
+
+        This is the last line of defence before real money: it runs after login and
+        before ``connected`` is set, so a misconfigured login cannot reach
+        ``place_order``. Disable only by deliberately setting MT5_REQUIRE_DEMO=false.
+        """
+        if not settings.MT5_REQUIRE_DEMO:
+            logger.warning(
+                "MT5_REQUIRE_DEMO is off — the demo-account guard is DISABLED. "
+                "This system may now trade a live account."
+            )
+            return
+
+        info = mt5.account_info()
+        if info is None:
+            mt5.shutdown()
+            raise RuntimeError(
+                "MT5 account_info() returned nothing, so the account type cannot be "
+                "verified. Refusing to trade (README §9 allows demo accounts only)."
+            )
+
+        demo_mode = getattr(mt5, "ACCOUNT_TRADE_MODE_DEMO", 0)
+        trade_mode = getattr(info, "trade_mode", None)
+        if trade_mode != demo_mode:
+            login = getattr(info, "login", "?")
+            server = getattr(info, "server", "?")
+            mt5.shutdown()
+            raise RuntimeError(
+                f"Refusing to trade: account {login} on {server} is NOT a demo "
+                f"account (trade_mode={trade_mode}, demo={demo_mode}). This project "
+                "is demo-only (README §9). If you truly intend to trade real money, "
+                "you must set MT5_REQUIRE_DEMO=false deliberately."
+            )
+
+        logger.info(
+            "Verified DEMO account: login=%s server=%s",
+            getattr(info, "login", "?"), getattr(info, "server", "?"),
+        )
 
     # ------------------------------------------------------------------ #
     # Orders

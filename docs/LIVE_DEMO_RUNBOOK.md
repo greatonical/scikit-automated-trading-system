@@ -71,10 +71,77 @@ With `EXECUTION_HANDLER=mock` still set:
 Same chain, filled in the in-process simulated broker. This confirms the plumbing
 before a real broker is involved. **Screenshot this** — it's a Chapter 4 figure.
 
+**If it says HOLD, that is normal** — the volume gate only fires on ~1.3% of bars, so
+most hours produce no trade. Don't wait days to find out whether the order path itself
+works. Force one through by temporarily lowering the gate, writing to a **scratch log**
+so your evidence log stays clean:
+
+```bash
+VOLUME_ZSCORE_THRESHOLD=-5 .venv/bin/python scripts/live_session.py EURUSD 1h \
+    --send --log logs/smoke_test.jsonl
+```
+
+That exercises sizing, `place_order`, the latency timer and the broker-result logging.
+It is a **plumbing test only** — the lowered threshold means the trade is not a real
+signal, so never quote it as a result or include it in the Chapter 4 trade table.
+Run the same command against `EXECUTION_HANDLER=mt5` once on the Windows box to prove
+the broker link before the real session starts.
+
 ### Step 3 — live demo session
 
-Set `EXECUTION_HANDLER=remote_mt5`, confirm the dashboard's Live tab shows green,
-then:
+**Pick the topology first. If you have a Windows machine, option A is far less work.**
+
+**Option A — everything on the Windows PC (simplest; no RPC, no second machine).**
+MetaTrader 5 and its Python API are Windows-only, so if you run the *whole engine*
+there, the network boundary disappears:
+
+```cmd
+git clone <this repo>  &&  cd scikit-automated-trading-system
+pip install -r requirements.txt
+pip install -r requirements-mt5.txt
+python scripts\run_backtest.py EURUSD 1h          :: trains + saves the model there
+set EXECUTION_HANDLER=mt5
+python scripts\live_session.py EURUSD 1h --send --loop --equity 5000
+```
+
+`EXECUTION_HANDLER=mt5` talks to the local terminal directly. No `MT5_RPC_HOST`, no
+token, no firewall. This is the recommended path when time is short.
+
+#### ⚠️ If that machine also runs a live system (e.g. the gadel VPS)
+
+Reusing a VPS that already trades real money is the highest-risk option in this
+document. It is workable, but only with these five precautions — the first two are
+not optional.
+
+1. **Install a SECOND, separate MT5 terminal** for this project and point
+   `MT5_TERMINAL_PATH` at its `terminal64.exe`. Without it, `initialize()` attaches
+   to the terminal that is already running — the live one — and `login()` then
+   switches that terminal to a different account, which would knock the live EA off
+   its account mid-session. A portable install in its own folder is cleanest.
+2. **Use a dedicated DEMO account**, never the funded one. Keep
+   `MT5_REQUIRE_DEMO=true`; the handler reads `account_info().trade_mode` after
+   logging in and refuses to continue on a real account, before any order is sent.
+3. **Magic numbers must not collide.** This project stamps `20260917`; gadel's EA
+   uses `20260519` plus per-chart offsets, so they are already far apart. Keep
+   `MT5_ONLY_OWN_POSITIONS=true` — it is what stops this system from ever seeing or
+   closing a position it did not open.
+4. **Never attach this project's EA-less terminal to gadel's charts**, and don't
+   run the two terminals from the same data folder — MQL5 global variables are
+   terminal-wide.
+5. **Consider the blast radius.** A crash, a runaway loop or a filled disk on that
+   VPS affects live trading. Keep `--max-trades` low, run one pair at a time, and
+   prefer a cheap second VPS if one is available.
+
+```cmd
+set MT5_TERMINAL_PATH=C:\MT5-Demo\terminal64.exe
+set MT5_REQUIRE_DEMO=true
+set EXECUTION_HANDLER=mt5
+python scripts\live_session.py EURUSD 1h --send --loop --equity 5000
+```
+
+**Option B — engine on macOS/Linux, MT5 on a Windows host (the RPC split).** Use this
+only when the engine must stay on your Mac. Set `EXECUTION_HANDLER=remote_mt5`,
+confirm the dashboard's Live tab shows green, then:
 
 ```bash
 .venv/bin/python scripts/live_session.py EURUSD 1h --send --loop --equity 5000
@@ -172,3 +239,6 @@ hit:
 | `10027` on every order | Algo Trading is off in the MetaTrader toolbar |
 | `unauthorized` | `MT5_RPC_TOKEN` differs between the two machines |
 | `below_min_volume` | the sized position is under the broker's minimum lot — by design we reject rather than round up. Raise `--equity` or `RISK_FRACTION_PER_TRADE` |
+| `Refusing to trade: … is NOT a demo account` | the guard did its job — that login is a live account. Switch to the demo login |
+| `account_info() returned nothing` | the terminal isn't logged in, or MT5 attached to a terminal you didn't intend — set `MT5_TERMINAL_PATH` |
+| Orders appear in the **wrong terminal** | `initialize()` attached to the already-running terminal. Set `MT5_TERMINAL_PATH` to your dedicated installation |

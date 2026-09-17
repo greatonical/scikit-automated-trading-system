@@ -32,7 +32,10 @@
       "Bash(.venv/bin/python -m py_compile scripts/live_session.py)",
       "Bash(timeout 180 .venv/bin/python scripts/live_session.py EURUSD 1h)",
       "Bash(awk '{print $6, $7, $8, $9}')",
-      "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h)"
+      "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h)",
+      "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h --send)",
+      "Bash(.venv/bin/python scripts/live_session.py GBPUSD 1h --send)",
+      "Bash(.venv/bin/python -m pytest tests/test_mt5_execution.py -q -p no:warnings)"
     ],
     "additionalDirectories": [
       "/Users/admin/Downloads"

@@ -41,21 +41,42 @@ def _fake_mt5():
     m.SYMBOL_FILLING_FOK = 1
     m.SYMBOL_FILLING_IOC = 2
     m.TRADE_RETCODE_DONE = 10009
+    # Account types — the demo-only guard compares account_info().trade_mode
+    # against ACCOUNT_TRADE_MODE_DEMO.
+    m.ACCOUNT_TRADE_MODE_DEMO = 0
+    m.ACCOUNT_TRADE_MODE_CONTEST = 1
+    m.ACCOUNT_TRADE_MODE_REAL = 2
 
     state = {
         "logged_in": False, "shutdown": False, "requests": [], "tick": True,
         # HFMarkets-like default: this symbol accepts FOK only.
         "filling_mode": m.SYMBOL_FILLING_FOK,
         "retcode": m.TRADE_RETCODE_DONE,
+        # Which terminal installation initialize() was pointed at (None = MT5 picks).
+        "init_path": None,
+        # Account type reported after login; demo by default.
+        "trade_mode": m.ACCOUNT_TRADE_MODE_DEMO,
+        "account_info_missing": False,
     }
     m._state = state
 
-    def initialize():
+    def initialize(path=None, **kwargs):
+        # Real MT5 takes an optional terminal path; record it so tests can assert
+        # which installation we asked for.
+        state["init_path"] = path
         return True
 
     def login(login, password, server):
         state["logged_in"] = True
         return True
+
+    def account_info():
+        if state["account_info_missing"]:
+            return None
+        return types.SimpleNamespace(
+            login=5012345678, server="HFMarkets-Demo",
+            trade_mode=state["trade_mode"], balance=10_000.0,
+        )
 
     def shutdown():
         state["shutdown"] = True
@@ -99,6 +120,7 @@ def _fake_mt5():
         return (ours, manual)
 
     m.initialize = initialize
+    m.account_info = account_info
     m.login = login
     m.shutdown = shutdown
     m.last_error = last_error
@@ -178,6 +200,68 @@ def test_disconnect_calls_shutdown(connected_handler):
     connected_handler.disconnect()
     assert connected_handler.connected is False
     assert connected_handler._mt5._state["shutdown"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Terminal targeting + demo-only guard
+#
+# These matter when the host also runs another MT5 (e.g. a live trading system):
+# initialize() with no path attaches to whichever terminal is ALREADY RUNNING, and
+# login() then switches THAT terminal's account. Using a different *account* is not
+# enough — you need a different *terminal installation*.
+# --------------------------------------------------------------------------- #
+def test_initialize_receives_the_configured_terminal_path(monkeypatch):
+    fake = _fake_mt5()
+    monkeypatch.setitem(sys.modules, "MetaTrader5", fake)
+    monkeypatch.setattr(settings, "MT5_TERMINAL_PATH", r"C:\MT5-Demo\terminal64.exe")
+    MT5ExecutionHandler(login="5012345678", password="x", server="Demo").connect()
+    assert fake._state["init_path"] == r"C:\MT5-Demo\terminal64.exe"
+
+
+def test_initialize_gets_no_path_when_unset(monkeypatch):
+    fake = _fake_mt5()
+    monkeypatch.setitem(sys.modules, "MetaTrader5", fake)
+    monkeypatch.setattr(settings, "MT5_TERMINAL_PATH", "")
+    MT5ExecutionHandler(login="5012345678", password="x", server="Demo").connect()
+    assert fake._state["init_path"] is None
+
+
+def test_connect_refuses_a_live_account(monkeypatch):
+    """The last line of defence before real money (README §9)."""
+    fake = _fake_mt5()
+    fake._state["trade_mode"] = fake.ACCOUNT_TRADE_MODE_REAL
+    monkeypatch.setitem(sys.modules, "MetaTrader5", fake)
+    monkeypatch.setattr(settings, "MT5_REQUIRE_DEMO", True)
+    h = MT5ExecutionHandler(login="5012345678", password="x", server="Live")
+    with pytest.raises(RuntimeError, match="NOT a demo account"):
+        h.connect()
+    assert h.connected is False
+    assert fake._state["shutdown"] is True      # the session was torn down
+
+
+def test_live_account_allowed_only_when_the_guard_is_deliberately_disabled(monkeypatch):
+    fake = _fake_mt5()
+    fake._state["trade_mode"] = fake.ACCOUNT_TRADE_MODE_REAL
+    monkeypatch.setitem(sys.modules, "MetaTrader5", fake)
+    monkeypatch.setattr(settings, "MT5_REQUIRE_DEMO", False)
+    h = MT5ExecutionHandler(login="5012345678", password="x", server="Live")
+    assert h.connect() is True
+
+
+def test_connect_refuses_when_the_account_type_cannot_be_verified(monkeypatch):
+    fake = _fake_mt5()
+    fake._state["account_info_missing"] = True
+    monkeypatch.setitem(sys.modules, "MetaTrader5", fake)
+    monkeypatch.setattr(settings, "MT5_REQUIRE_DEMO", True)
+    h = MT5ExecutionHandler(login="5012345678", password="x", server="Demo")
+    with pytest.raises(RuntimeError, match="cannot be verified"):
+        h.connect()
+    assert h.connected is False
+
+
+def test_demo_account_connects_normally(connected_handler):
+    """The default fake reports a demo account, so the guard must be transparent."""
+    assert connected_handler.connected is True
 
 
 # --------------------------------------------------------------------------- #

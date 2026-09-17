@@ -318,6 +318,9 @@ production system that hit each of these live):
 | Live tab shows a warning, not green | `EXECUTION_HANDLER` isn't `mock`, or the Windows host is unreachable |
 | Every live call says `unauthorized` | `MT5_RPC_TOKEN` differs between the two machines |
 | Live order rejected `below_min_volume` | The computed size is under the broker's minimum lot — by design, we reject rather than round up |
+| `Refusing to trade: account … is NOT a demo account` | Working as intended — that login is a live account. Use a demo one. `MT5_REQUIRE_DEMO=false` exists but means real money |
+| `account_info() returned nothing … cannot be verified` | The terminal isn't logged in, or `initialize()` attached to a terminal you didn't expect — set `MT5_TERMINAL_PATH` |
+| It connected to the **wrong terminal** | `initialize()` with no path grabs whichever terminal is already running. Set `MT5_TERMINAL_PATH` to your own installation's `terminal64.exe` |
 | `scripts/make_progress_docx.py` fails | Needs `pip install python-docx` (not a core dependency) |
 
 ---

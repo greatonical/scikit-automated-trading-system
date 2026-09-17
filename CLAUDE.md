@@ -43,7 +43,13 @@ Three authorities, in precedence order:
 - **Volume is in units of base currency across the `ExecutionHandler` interface.**
   Only `MT5ExecutionHandler` converts to broker lots.
 - **Demo MT5 account only.** Credentials live in the gitignored `.env`, never hardcoded,
-  never committed, never printed.
+  never committed, never printed. **Enforced in code:** `MT5ExecutionHandler.connect()`
+  reads `account_info().trade_mode` after login and refuses a non-demo account *before*
+  `connected` is set (`MT5_REQUIRE_DEMO`, default on). Don't weaken this guard.
+- **On a host that runs another MT5, set `MT5_TERMINAL_PATH`.** A separate *account* is
+  not enough: `initialize()` with no path attaches to whichever terminal is already
+  running, and `login()` then switches *that* terminal's account — which would knock a
+  live system off its account. Point it at a second, dedicated terminal installation.
 - **`MetaTrader5` stays out of `requirements.txt`** (Windows-only). It lives in
   `requirements-mt5.txt`.
 
