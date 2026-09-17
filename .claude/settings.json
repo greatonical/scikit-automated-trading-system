@@ -28,7 +28,11 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git commit *)",
-      "Bash(git rev-list *)"
+      "Bash(git rev-list *)",
+      "Bash(.venv/bin/python -m py_compile scripts/live_session.py)",
+      "Bash(timeout 180 .venv/bin/python scripts/live_session.py EURUSD 1h)",
+      "Bash(awk '{print $6, $7, $8, $9}')",
+      "Bash(.venv/bin/python scripts/live_session.py EURUSD 1h)"
     ],
     "additionalDirectories": [
       "/Users/admin/Downloads"

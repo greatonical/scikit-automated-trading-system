@@ -71,6 +71,7 @@ scripts/sweep_winrate.py  SL/TP exit-geometry frontier + realised R:R (Step E)
 scripts/tune_thresholds.py 60/20/20 val-tuned threshold search (Step C)
 scripts/baseline_noskill.py same exits, random/fixed direction — how much is the model?
 scripts/inspect_model.py  human-readable view of models/*.pkl incl. provenance
+scripts/live_session.py   live signal->order chain on a demo account (docs/LIVE_DEMO_RUNBOOK.md)
 scripts/make_progress_docx.py one-off: renders the June progress report (needs python-docx)
 docker/engine/            engine + dashboard image (Linux Python, no Wine)
 docker/mt5/               Wine + xvfb + MT5 image — documented DEAD END, see below
@@ -90,6 +91,7 @@ Full setup + runbook for a human (dashboard walkthrough, mock vs live, troublesh
 .venv/bin/python scripts/baseline_noskill.py EURUSD 1h # no-skill baseline
 .venv/bin/python scripts/tune_thresholds.py EURUSD 1h  # Step C
 .venv/bin/python scripts/inspect_model.py              # read the saved models in plain text
+.venv/bin/python scripts/live_session.py EURUSD 1h     # live signal->order, DRY RUN (--send to trade)
 .venv/bin/python -m streamlit run dashboard/app.py     # dashboard on :8501
 docker compose up engine                               # backtest only, no Wine
 docker compose --profile live up                       # + mt5 container (see DEAD END)
@@ -147,6 +149,9 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
 - **Execution latency (< 500 ms) has never been measured against a broker.** The dashboard's
   Live mode records `latency_ms` per manual order, but no live MT5 run exists;
   `BacktestResult.meets_targets()` checks 4 of the 5 metrics. Report Scenario C is untested.
+  The path to closing this is `scripts/live_session.py` + `docs/LIVE_DEMO_RUNBOOK.md`: it
+  runs the full signal->order chain on a demo account and logs `latency_ms` per order.
+  Until someone actually runs it, this gap stays open — don't mark it closed.
 - **Sharpe is per-trade and unannualised** (`Backtester._sharpe`). The report's > 1.0 target
   conventionally refers to an annualised figure. State the convention wherever it appears.
 - **`SIGNAL_LOG_FILE` and `LOG_LEVEL` are defined but unused.** Signal decisions go to the

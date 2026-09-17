@@ -251,6 +251,10 @@ Switching is one line in `.env`; no code changes.
 
 ## 5. Connecting a real (demo) broker
 
+> **Running an actual demo session?** `docs/LIVE_DEMO_RUNBOOK.md` is the step-by-step
+> protocol (`scripts/live_session.py`, what to log, how to report it honestly in
+> Chapter 4). This section is the one-time machine setup it depends on.
+
 **Status: the live path is built and unit-tested but has never been run against a real
 broker.** MetaTrader's Python API cannot start under Wine — proven exhaustively here and
 by a sibling project (`docs/WINE_VERDICT.md`) — so it needs real Windows.
