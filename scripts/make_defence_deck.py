@@ -74,6 +74,18 @@ def next_fig() -> int:
     return _fig["n"]
 
 
+def _e(v):
+    """Coerce a coordinate to INTEGER English Metric Units.
+
+    Arithmetic such as ``w / 2`` yields a float in Python 3, and python-pptx writes
+    it into the XML verbatim (e.g. ``y="1792224.0"``). ST_Coordinate is an integer
+    type: PowerPoint tolerates the float, but Keynote and Google Slides reject the
+    entire file. Every coordinate therefore passes through here before it reaches a
+    shape constructor.
+    """
+    return Emu(int(round(float(v))))
+
+
 # --------------------------------------------------------------------------- #
 # Low-level helpers
 # --------------------------------------------------------------------------- #
@@ -90,7 +102,7 @@ def _style_run(run, size=12, bold=False, color=INK, italic=False, mono=False):
 
 def textbox(slide, x, y, w, h, text, size=12, bold=False, color=INK,
             align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, italic=False, mono=False):
-    tb = slide.shapes.add_textbox(x, y, w, h)
+    tb = slide.shapes.add_textbox(_e(x), _e(y), _e(w), _e(h))
     tf = tb.text_frame
     tf.word_wrap = True
     tf.margin_left = tf.margin_right = 0
@@ -108,7 +120,7 @@ def bullets(slide, items, x=MARGIN, y=BODY_TOP, w=CONTENT_W, h=Inches(4.0),
     """items: list of str or (text, level) or (text, level, bold)."""
     # Never let a text frame run off the bottom of the canvas.
     h = min(h, H - y - Inches(0.30))
-    tb = slide.shapes.add_textbox(x, y, w, h)
+    tb = slide.shapes.add_textbox(_e(x), _e(y), _e(w), _e(h))
     tf = tb.text_frame
     tf.word_wrap = True
     tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
@@ -132,6 +144,25 @@ def bullets(slide, items, x=MARGIN, y=BODY_TOP, w=CONTENT_W, h=Inches(4.0),
         r.text = bullet + text
         _style_run(r, size - (1 if level else 0), bold, INK if level == 0 else RGBColor(0x33, 0x33, 0x33))
     return tb
+
+
+def _set_slide_size(prs, width, height):
+    """Set the slide size AND clear the now-wrong ST_SlideSizeType attribute.
+
+    python-pptx updates cx/cy when you change the slide size but leaves the default
+    template's type="screen4x3" in place, so a 16:9 deck declares itself 4:3.
+    PowerPoint ignores the contradiction; stricter readers (Keynote, Google Slides)
+    can refuse the file. The attribute is optional in ECMA-376, so removing it is the
+    safe fix — the real geometry is carried by cx/cy.
+    """
+    prs.slide_width, prs.slide_height = width, height
+    try:
+        el = prs._element
+    except AttributeError:                      # pragma: no cover - API shift
+        el = prs.part._element
+    sld_sz = el.find(qn("p:sldSz"))
+    if sld_sz is not None and "type" in sld_sz.attrib:
+        del sld_sz.attrib["type"]
 
 
 def add_slide(prs, title=None, number=True):
@@ -165,7 +196,7 @@ def caption(slide, text, y=None):
 # --------------------------------------------------------------------------- #
 def box(slide, x, y, w, h, text, size=9, fill=WHITE, line=INK, bold=False,
         shape=MSO_SHAPE.RECTANGLE, color=INK, dash=False, line_w=1.0):
-    sp = slide.shapes.add_shape(shape, x, y, w, h)
+    sp = slide.shapes.add_shape(shape, _e(x), _e(y), _e(w), _e(h))
     sp.fill.solid()
     sp.fill.fore_color.rgb = fill
     sp.line.color.rgb = line
@@ -192,7 +223,8 @@ def box(slide, x, y, w, h, text, size=9, fill=WHITE, line=INK, bold=False,
 
 def line(slide, x1, y1, x2, y2, arrow=True, dash=False, color=INK, width=1.0,
          back_arrow=False):
-    cn = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x1, y1, x2, y2)
+    cn = slide.shapes.add_connector(
+        MSO_CONNECTOR.STRAIGHT, _e(x1), _e(y1), _e(x2), _e(y2))
     cn.line.color.rgb = color
     cn.line.width = Pt(width)
     if dash:
@@ -241,7 +273,8 @@ def class_box(slide, x, y, w, name, attrs, ops, h_name=Inches(0.26),
     ah = row * max(len(attrs), 1)
     oh = row * max(len(ops), 1)
     for items, top, hh in ((attrs, y + h_name, ah), (ops, y + h_name + ah, oh)):
-        cell = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, w, hh)
+        cell = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE, _e(x), _e(top), _e(w), _e(hh))
         cell.fill.solid()
         cell.fill.fore_color.rgb = WHITE
         cell.line.color.rgb = INK
@@ -283,13 +316,13 @@ def placeholder(slide, x, y, w, h, what):
 def table(slide, data, x, y, w, h, col_w=None, head_size=9, body_size=9,
           mark_cols=()):
     rows, cols = len(data), len(data[0])
-    shape = slide.shapes.add_table(rows, cols, x, y, w, h)
+    shape = slide.shapes.add_table(rows, cols, _e(x), _e(y), _e(w), _e(h))
     tbl = shape.table
     if col_w:
         for i, cw in enumerate(col_w):
-            tbl.columns[i].width = cw
+            tbl.columns[i].width = _e(cw)
     for r, row in enumerate(data):
-        tbl.rows[r].height = Inches(0.26)
+        tbl.rows[r].height = _e(Inches(0.26))
         for c, val in enumerate(row):
             cell = tbl.cell(r, c)
             cell.margin_left = cell.margin_right = Inches(0.05)
@@ -1363,10 +1396,51 @@ def s_thanks(prs):
              "answers to the twelve most likely questions.")
 
 
+def _validate(path: Path) -> None:
+    """Fail loudly if the saved file would be rejected by a strict reader.
+
+    Two defects have already shipped from this script. Both were invisible in
+    PowerPoint but fatal in Keynote and Google Slides:
+
+      1. Float coordinates (``y="1792224.0"``). ``w / 2`` returns a float in Python 3
+         and python-pptx writes it verbatim, but ST_Coordinate is an integer type.
+      2. A stale ``sldSz type="screen4x3"`` on a 16:9 deck.
+
+    An earlier version of this check wrapped the shape reads in
+    ``except Exception: continue``, which silently swallowed (1) and reported a clean
+    file. This one is deliberately allowed to raise.
+    """
+    import re
+    import zipfile
+
+    with zipfile.ZipFile(path) as z:
+        float_attr = re.compile(r'\b(x|y|cx|cy|w|h)="(-?\d+\.\d+)"')
+        offenders = [
+            f"{name}: {attr}={val}"
+            for name in z.namelist()
+            if name.startswith("ppt/slides/") and name.endswith(".xml")
+            for attr, val in float_attr.findall(z.read(name).decode("utf-8", "ignore"))
+        ]
+        if offenders:
+            raise ValueError(
+                f"{len(offenders)} non-integer coordinate(s): {offenders[:5]}"
+            )
+        sld_sz = re.search(
+            r"<p:sldSz[^/]*/>", z.read("ppt/presentation.xml").decode("utf-8")
+        )
+    if sld_sz and "type=" in sld_sz.group(0):
+        raise ValueError(f"sldSz still declares a size type: {sld_sz.group(0)}")
+
+    # Touch every coordinate so an unparsable value raises instead of being skipped.
+    for slide in Presentation(str(path)).slides:
+        for shape in slide.shapes:
+            _ = (shape.left, shape.top, shape.width, shape.height)
+
+
 # --------------------------------------------------------------------------- #
 def build() -> Path:
     prs = Presentation()
-    prs.slide_width, prs.slide_height = W, H
+    _set_slide_size(prs, W, H)
 
     s_title(prs)
     s_outline(prs)
@@ -1406,6 +1480,7 @@ def build() -> Path:
 
     OUT.parent.mkdir(exist_ok=True)
     prs.save(str(OUT))
+    _validate(OUT)
     return OUT
 
 
