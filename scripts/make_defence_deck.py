@@ -46,6 +46,7 @@ from pptx.oxml.ns import qn                                      # noqa: E402
 from pptx.util import Emu, Inches, Pt                            # noqa: E402
 
 OUT = ROOT / "docs" / "DEFENCE_PRESENTATION.pptx"
+NOTES_OUT = ROOT / "docs" / "DEFENCE_SPEAKER_NOTES.md"
 
 # Base template — see the Keynote note in the module docstring. Without it the deck
 # still builds, but any machine running Keynote will refuse to open it.
@@ -434,7 +435,7 @@ def s_outline(prs):
     s = add_slide(prs, "Presentation Outline")
     left = ["INTRODUCTION", "STATEMENT OF PROBLEM", "AIM AND OBJECTIVES",
             "LITERATURE REVIEW", "METHODOLOGY", "JUSTIFICATION", "SCOPE OF PROJECT"]
-    right = ["WORK DONE — DESIGN SPECIFICATION", "WORK DONE — IMPLEMENTATION & RESULTS",
+    right = ["WORK DONE: DESIGN SPECIFICATION", "WORK DONE: IMPLEMENTATION & RESULTS",
              "FROM RESEARCH TO A LIVE PRODUCT", "CONTRIBUTION TO KNOWLEDGE",
              "WORK LEFT UNDONE", "CONCLUSION", "REFERENCES"]
     for col, items, x in ((0, left, MARGIN), (1, right, Inches(5.15))):
@@ -448,7 +449,7 @@ def s_outline(prs):
             r.text = f"{i + 1 + col * len(left):2d}.   {it}"
             _style_run(r, 12, False, INK)
     notes(s, "Keep this to fifteen seconds. Point out that the second column is where the "
-             "evidence lives — design, results, and the live product.")
+             "evidence lives: design, results, and the live product.")
 
 
 def s_intro1(prs):
@@ -458,7 +459,7 @@ def s_intro1(prs):
         "trading over US$7 trillion per day, and it is open 24 hours a day, five days a week.",
         "Retail participation has grown rapidly, but the outcomes are poor: regulators "
         "report that a large majority of retail accounts lose money (ESMA, 2018).",
-        "Two causes dominate — emotional decision-making under pressure, and the "
+        "Two causes dominate: emotional decision-making under pressure, and the "
         "impossibility of a human monitoring a 24-hour market consistently.",
         "Algorithmic trading removes the emotional element and enforces a rule set "
         "identically on every candle, which is why institutional participants adopted it first.",
@@ -475,7 +476,7 @@ def s_intro2(prs):
     s = add_slide(prs, "Introduction (cont'd)")
     bullets(s, [
         ("Why a rule filter AND a model, rather than either alone?", 0, True),
-        ("A pure rule system (e.g. moving-average crossover) cannot adapt — it fires "
+        ("A pure rule system (e.g. moving-average crossover) cannot adapt; it fires "
          "the same way in every market condition.", 1),
         ("A pure machine-learning system trades constantly and is hard to defend: it "
          "gives no human-readable reason for any single decision.", 1),
@@ -484,8 +485,8 @@ def s_intro2(prs):
         ("Why the Random Forest and not deep learning?", 0, True),
         ("Runs on CPU-only hardware; resists overfitting through ensemble averaging; "
          "and exposes feature importances, so the model can be interrogated.", 1),
-        ("Deep learning (LSTM) was reviewed and deliberately rejected — see Literature "
-         "Review — on grounds of compute cost and opacity, not ignorance.", 1),
+        ("Deep learning (LSTM) was reviewed and deliberately rejected (see Literature "
+         "Review) on grounds of compute cost and opacity, not ignorance.", 1),
     ], size=12.5)
     notes(s, "If a panel member asks 'why not an LSTM?', this slide is the answer and it "
              "is already in Chapter 2. Interpretability is a stated project goal.")
@@ -498,7 +499,7 @@ def s_problem(prs):
         "inconsistent, and cannot be sustained across a 24-hour market.",
         "Existing retail automation is largely rule-only: it cannot weigh evidence, "
         "and it repeats the same behaviour regardless of market state.",
-        "Published machine-learning trading results are frequently not reproducible — "
+        "Published machine-learning trading results are frequently not reproducible: "
         "they omit transaction costs, shuffle time-series data (which leaks the future "
         "into training), or report only the best run.",
         "Most critically, results are rarely reported with any measure of uncertainty, "
@@ -524,7 +525,7 @@ def s_aim(prs):
     bullets(s, [
         ("i.   To design a hybrid decision model in which a Volume Z-Score rule and a "
          "Random Forest classifier must both agree before any trade is taken.", 0),
-        ("ii.  To implement the system end to end — data acquisition, feature "
+        ("ii.  To implement the system end to end: data acquisition, feature "
          "engineering, labelling, training, signal generation, risk management and "
          "order execution.", 0),
         ("iii. To integrate a risk-management layer providing fixed-fractional position "
@@ -551,7 +552,7 @@ def s_lit1(prs):
         ["1", "Lopez de Prado (2018): Advances in Financial Machine Learning",
          "Triple-barrier labelling; meta-labelling",
          "Naive next-candle labels do not match how trades actually close",
-         "ADOPTED. The single most effective change made — it turned both currency "
+         "ADOPTED. The single most effective change made; it turned both currency "
          "pairs from a net loss into a net profit."],
         ["2", "Chong, Ng & Liew (2014): Technical indicators as ML inputs",
          "RSI / MACD as model features",
@@ -563,7 +564,7 @@ def s_lit1(prs):
          "Order-flow / institutional footprints carry signal",
          "Motivated the volume filter and the order-block test (Step F)."],
     ], "1 of 2")
-    notes(s, "The 'Comment' column is the important one — it shows you engaged with each "
+    notes(s, "The 'Comment' column is the important one; it shows you engaged with each "
              "paper and measured its claim rather than citing it decoratively.")
 
 
@@ -572,7 +573,7 @@ def s_lit2(prs):
         ["4", "Hu, Zhao & Khushi (2021); Yildirim et al. (2021): LSTM for FX",
          "Deep recurrent networks on price series",
          "Report gains for FX direction prediction",
-         "REVIEWED, NOT ADOPTED — CPU-only hardware, and the opacity conflicts "
+         "REVIEWED, NOT ADOPTED: CPU-only hardware, and the opacity conflicts "
          "with this project's interpretability goal."],
         ["5", "Bailey et al. (2014): The probability of backtest overfitting",
          "Statistical critique of backtesting",
@@ -593,12 +594,12 @@ def s_methodology(prs):
     s = add_slide(prs, "Methodology")
     bullets(s, [
         ("Approach:", 0, True),
-        ("Experimental and incremental — build one module at a time, measure every "
+        ("Experimental and incremental: build one module at a time, measure every "
          "change on BOTH currency pairs, and record the result whether it helped or not.", 1),
         ("Data:", 0, True),
         ("Hourly EUR/USD and GBP/USD candles from Yahoo Finance. Because spot FX has "
          "no central exchange and reports zero volume, volume is taken from the "
-         "matching CME currency futures (6E=F, 6B=F) — the standard proxy for "
+         "matching CME currency futures (6E=F, 6B=F), the standard proxy for "
          "institutional activity.", 1),
         ("Model:", 0, True),
         ("Random Forest classifier (scikit-learn), tuned with TimeSeriesSplit "
@@ -618,7 +619,7 @@ def s_methodology(prs):
 def s_justification(prs):
     s = add_slide(prs, "Justification")
     bullets(s, [
-        "Removes emotional and fatigue-driven error from execution — the dominant "
+        "Removes emotional and fatigue-driven error from execution, the dominant "
         "documented cause of retail losses.",
         "The hybrid AND-gate makes every decision explainable: each trade carries the "
         "volume Z-Score that triggered it and the model probability that confirmed it, "
@@ -626,7 +627,7 @@ def s_justification(prs):
         "Risk management is enforced by the system rather than by the trader's "
         "discipline: position size is a fixed fraction of equity, and hard drawdown and "
         "daily-loss limits stop trading automatically.",
-        "The evaluation method is itself a contribution — it is reproducible, costed, "
+        "The evaluation method is itself a contribution; it is reproducible, costed, "
         "and reports negative results, which is uncommon in this literature.",
         "The architecture separates the analytical engine from the broker, so the same "
         "tested engine runs against a simulated broker or a real one with a single "
@@ -640,7 +641,7 @@ def s_scope(prs):
     s = add_slide(prs, "Scope of the Project")
     bullets(s, [
         ("In scope:", 0, True),
-        ("Two currency pairs — EUR/USD and GBP/USD — on the 1-hour timeframe.", 1),
+        ("Two currency pairs, EUR/USD and GBP/USD, on the 1-hour timeframe.", 1),
         ("A complete pipeline: data handling, feature engineering, labelling, model "
          "training, signal generation, risk management, order execution, backtesting "
          "and a monitoring dashboard.", 1),
@@ -691,14 +692,14 @@ def s_workdone_overview(prs):
             _style_run(r, 10)
         x += Inches(3.1)
     notes(s, "This is the map for the next twelve slides. Say: 'the design is not a "
-             "proposal — all of it is built and measured.'")
+             "proposal; all of it is built and measured.'")
 
 
 # --------------------------------------------------------------------------- #
 # Diagrams
 # --------------------------------------------------------------------------- #
 def s_context(prs):
-    s = add_slide(prs, "Design Specification — Context Diagram")
+    s = add_slide(prs, "Design Specification: Context Diagram")
     cx, cy = Inches(4.62), Inches(2.45)
     box(s, cx, cy, Inches(1.9), Inches(1.0),
         "0\nAutomated Financial\nTrading System", size=9, bold=True,
@@ -735,11 +736,11 @@ def s_context(prs):
                f"Automated Financial Trading System")
     notes(s, "Standard Level-0 DFD: exactly one process, external entities as rectangles, "
              "labelled data flows, and no internal data stores at this level. Point out "
-             "that the broker is an external entity — that is what makes it swappable.")
+             "that the broker is an external entity; that is what makes it swappable.")
 
 
 def s_architecture(prs):
-    s = add_slide(prs, "Design Specification — System Architecture")
+    s = add_slide(prs, "Design Specification: System Architecture")
     x0, w0 = Inches(1.45), Inches(7.1)
     layers = [
         ("Layer 1", "Presentation Layer", ["Streamlit Dashboard", "Backtest Mode", "Live Mode"]),
@@ -771,7 +772,7 @@ def s_architecture(prs):
 
 
 def s_block(prs):
-    s = add_slide(prs, "Design Specification — Block Diagram")
+    s = add_slide(prs, "Design Specification: Block Diagram")
     blocks = ["Data\nHandler", "Pre-\nprocessor", "Random\nForest", "Signal\nGenerator",
               "Risk\nManager", "Execution\nHandler"]
     x = Inches(0.42)
@@ -797,7 +798,7 @@ def s_block(prs):
         "Triple-Barrier Labeller\n(training target)", size=8.5, fill=RGBColor(0xFA, 0xF6, 0xEC))
     line(s, Inches(2.17), Inches(3.25), Inches(2.17), Inches(2.42))
     box(s, Inches(5.7), Inches(3.25), Inches(3.68), Inches(0.5),
-        "Backtester  —  replays history, charges spread + slippage", size=8.5,
+        "Backtester:  replays history, charges spread + slippage", size=8.5,
         fill=RGBColor(0xFA, 0xF6, 0xEC))
     line(s, Inches(7.54), Inches(3.25), Inches(7.54), Inches(2.42))
     caption(s, f"Figure {next_fig()}: Block Diagram of the processing pipeline")
@@ -806,7 +807,7 @@ def s_block(prs):
 
 
 def s_usecase(prs):
-    s = add_slide(prs, "Design Specification — Use Case Diagram")
+    s = add_slide(prs, "Design Specification: Use Case Diagram")
     bx, by, bw, bh = Inches(2.35), Inches(1.12), Inches(5.25), Inches(3.45)
     box(s, bx, by, bw, bh, "", fill=WHITE, line=GREY)
     textbox(s, bx + Inches(0.1), by + Inches(0.06), Inches(3.0), Inches(0.2),
@@ -863,7 +864,7 @@ def s_usecase(prs):
 
 
 def s_activity(prs):
-    s = add_slide(prs, "Design Specification — Activity Diagram")
+    s = add_slide(prs, "Design Specification: Activity Diagram")
     cx = Inches(2.05)
     box(s, cx - Inches(0.09), Inches(1.10), Inches(0.18), Inches(0.18), "",
         shape=MSO_SHAPE.OVAL, fill=INK, line=INK)
@@ -921,7 +922,7 @@ def s_activity(prs):
 
 
 def s_class(prs):
-    s = add_slide(prs, "Design Specification — Class Diagram")
+    s = add_slide(prs, "Design Specification: Class Diagram")
     y0 = Inches(1.08)
     class_box(s, Inches(0.42), y0, Inches(2.05), "DataHandler",
               ["- cache_dir: Path"],
@@ -965,7 +966,7 @@ def s_class(prs):
     line(s, Inches(3.80), Inches(2.58), Inches(3.80), Inches(2.18), arrow=False)
 
     caption(s, f"Figure {next_fig()}: Class Diagram. The engine depends only on the "
-               f"abstract ExecutionHandler — never on a concrete broker.")
+               f"abstract ExecutionHandler, never on a concrete broker.")
     notes(s, "The generalization triangles point at the abstract class. This is the "
              "design decision that let the whole system be built and tested on macOS "
              "while the real broker library is Windows-only.")
@@ -980,30 +981,30 @@ def s_hybrid(prs):
             "A worked example from a real run (EUR/USD, 1-hour candle):", size=12)
     data = [
         ["Check", "Value", "Threshold", "Result"],
-        ["Rule gate — Volume Z-Score", "+4.249", "> +1.5", "PASS"],
-        ["ML gate — P(bullish)", "0.567", "> 0.55", "PASS"],
+        ["Rule gate: Volume Z-Score", "+4.249", "> +1.5", "PASS"],
+        ["ML gate: P(bullish)", "0.567", "> 0.55", "PASS"],
         ["Decision", "BUY", "both must pass", "TRADE"],
     ]
     table(s, data, MARGIN, BODY_TOP + Inches(0.4), CONTENT_W, Inches(1.2),
           col_w=[Inches(3.3), Inches(1.9), Inches(1.9), Inches(2.0)], mark_cols=(3,))
     bullets(s, [
-        "If either gate fails the system returns HOLD — and on roughly 98.7% of candles, "
+        "If either gate fails the system returns HOLD, and on roughly 98.7% of candles, "
         "that is exactly what happens.",
         "Both comparisons are strictly greater-than, so a borderline value does not trade.",
         "The position is then sized by the Risk Manager: 1% of equity at risk, stop-loss "
         "1.2% and take-profit 0.4% from entry, giving 14,532 units (0.15 lots) in this case.",
-        "Every decision — including every HOLD — is logged with its probability and "
+        "Every decision, including every HOLD, is logged with its probability and "
         "Z-Score, which is what makes the system auditable.",
     ], y=BODY_TOP + Inches(1.78), size=11.5, gap=5)
     notes(s, "These are genuine numbers from a dry run, not invented. If asked, the "
-             "selectivity (1.3% of candles) is deliberate — see Barber & Odean.")
+             "selectivity (1.3% of candles) is deliberate; see Barber & Odean.")
 
 
 def s_label(prs):
     s = add_slide(prs, "The Decisive Design Decision: Triple-Barrier Labelling")
     bullets(s, [
         ("The problem:", 0, True),
-        ("The first version asked the model 'will the next candle close higher?' — and "
+        ("The first version asked the model 'will the next candle close higher?', and "
          "it lost money on both pairs, because that question is not the one the strategy "
          "actually cares about.", 1),
         ("The fix (Lopez de Prado, 2018):", 0, True),
@@ -1013,9 +1014,9 @@ def s_label(prs):
 
     y = Inches(3.05)
     box(s, Inches(0.9), y - Inches(0.62), Inches(3.4), Inches(0.34),
-        "upper barrier — take-profit  →  class 1", size=8.5, fill=RGBColor(0xEC, 0xF5, 0xEE))
+        "upper barrier: take-profit  →  class 1", size=8.5, fill=RGBColor(0xEC, 0xF5, 0xEE))
     box(s, Inches(0.9), y + Inches(0.62), Inches(3.4), Inches(0.34),
-        "lower barrier — stop-loss  →  class 0", size=8.5, fill=RGBColor(0xF6, 0xEC, 0xEC))
+        "lower barrier: stop-loss  →  class 0", size=8.5, fill=RGBColor(0xF6, 0xEC, 0xEC))
     box(s, Inches(4.55), y, Inches(1.5), Inches(0.34),
         "vertical barrier\n24 bars", size=8, fill=LIGHT)
     line(s, Inches(0.9), y + Inches(0.17), Inches(4.5), y + Inches(0.17), arrow=True)
@@ -1031,19 +1032,19 @@ def s_label(prs):
 
 
 def s_results(prs):
-    s = add_slide(prs, "Results — Held-Out Test Set, Costs Included")
+    s = add_slide(prs, "Results: Held-Out Test Set, Costs Included")
     textbox(s, MARGIN, BODY_TOP, CONTENT_W, Inches(0.3),
             "Test period 20 January – 12 June 2026 (2,456 hourly candles, never seen "
             "during training):", size=11.5)
     data = [
         ["Metric", "Target", "EUR/USD", "GBP/USD"],
         ["Win rate", "> 60%", "73.3%  PASS", "78.4%  PASS"],
-        ["95% confidence interval", "—", "[55.6% – 85.8%]", "[62.8% – 88.6%]"],
+        ["95% confidence interval", "n/a", "[55.6% – 85.8%]", "[62.8% – 88.6%]"],
         ["Profit factor", "> 1.5", "1.34  FAIL", "1.62  PASS"],
         ["Maximum drawdown", "< 15%", "1.5%  PASS", "2.5%  PASS"],
         ["Sharpe (per-trade)", "> 1.0", "0.13  FAIL", "0.22  FAIL"],
-        ["Net profit / trades", "—", "+$256.57  (30)", "+$531.82  (37)"],
-        ["Targets met", "—", "2 of 4", "3 of 4"],
+        ["Net profit / trades", "n/a", "+$256.57  (30)", "+$531.82  (37)"],
+        ["Targets met", "n/a", "2 of 4", "3 of 4"],
     ]
     table(s, data, MARGIN, BODY_TOP + Inches(0.42), CONTENT_W, Inches(2.6),
           col_w=[Inches(2.9), Inches(1.5), Inches(2.35), Inches(2.35)], mark_cols=(2, 3))
@@ -1052,13 +1053,13 @@ def s_results(prs):
             "conventionally an annualised figure, so the two are not directly comparable. "
             "This is stated as a limitation rather than adjusted.", size=9.5, italic=True,
             color=RGBColor(0x55, 0x55, 0x55))
-    notes(s, "Do not hide the two FAILs — lead with them if necessary. A panel trusts a "
+    notes(s, "Do not hide the two FAILs; lead with them if necessary. A panel trusts a "
              "candidate who reports failures precisely far more than one whose every "
              "number passes.")
 
 
 def s_honesty(prs):
-    s = add_slide(prs, "Results — How Much of This Is Actually the Model?")
+    s = add_slide(prs, "Results: How Much of This Is Actually the Model?")
     bullets(s, [
         ("A win rate alone can be manufactured by exit geometry.", 0, True),
         ("With a stop-loss three times wider than the take-profit, most trades close as "
@@ -1067,12 +1068,12 @@ def s_honesty(prs):
         ("So the 73–78% headline win rate is mostly geometry, not prediction.", 1),
         ("Where the model's edge does show:", 0, True),
         ("Profit factor. Against every random-direction seed, the trained model wins on "
-         "profit factor — the metric that measures whether the trades KEPT were better "
+         "profit factor, the metric that measures whether the trades KEPT were better "
          "than the trades SKIPPED.", 1),
         ("Remaining honest caveats:", 0, True),
         ("Only ~30 trades per pair, hence the wide confidence intervals.", 1),
         ("The training label is long-only with a 24-bar horizon, while live trades take "
-         "both directions and are held to their barriers — a documented inconsistency.", 1),
+         "both directions and are held to their barriers, a documented inconsistency.", 1),
         ("Execution latency was measured only on a demo account, not at scale.", 1),
     ], size=11.5, gap=4)
     notes(s, "This slide wins vivas. You raised the objection before the panel did, "
@@ -1080,19 +1081,19 @@ def s_honesty(prs):
 
 
 def s_negative(prs):
-    s = add_slide(prs, "Results — Six Measured Negative Results")
+    s = add_slide(prs, "Results: Six Measured Negative Results")
     textbox(s, MARGIN, BODY_TOP, CONTENT_W, Inches(0.3),
             "Each feature was added alone, retrained, and measured on both pairs. None "
-            "improved both, so all are switched off — with the code kept.", size=11)
+            "improved both, so all are switched off, with the code kept.", size=11)
     data = [
         ["Feature tested", "In the literature?", "Measured outcome"],
         ["RSI", "Yes (Chong et al.)", "Hurt both pairs"],
-        ["MACD", "Yes (Chong et al.)", "Hurt badly — drawdown above 15%"],
+        ["MACD", "Yes (Chong et al.)", "Hurt badly: drawdown above 15%"],
         ["ATR (feature and stops)", "No", "Neutral to harmful"],
         ["Higher-timeframe trend", "No", "Helped EUR/USD, hurt GBP/USD"],
         ["Time-of-day / session", "No", "Helped EUR/USD, hurt GBP/USD"],
         ["Order blocks (SMC zones)", "Yes (Sirignano & Cont)",
-         "Helped GBP/USD only — 1 of 4 configurations"],
+         "Helped GBP/USD only: 1 of 4 configurations"],
     ]
     table(s, data, MARGIN, BODY_TOP + Inches(0.42), CONTENT_W, Inches(2.3),
           col_w=[Inches(3.0), Inches(2.4), Inches(3.7)])
@@ -1106,7 +1107,7 @@ def s_negative(prs):
 
 
 def s_orderblocks(prs):
-    s = add_slide(prs, "Case Study — Order Blocks, Tested Properly")
+    s = add_slide(prs, "Case Study: Order Blocks, Tested Properly")
     bullets(s, [
         ("Order blocks are the core of the sibling live product, so the concept was "
          "implemented here and measured rather than asserted.", 0),
@@ -1124,7 +1125,7 @@ def s_orderblocks(prs):
     table(s, data, MARGIN, BODY_TOP + Inches(1.20), CONTENT_W, Inches(1.5),
           col_w=[Inches(2.2), Inches(1.35), Inches(2.0), Inches(2.0), Inches(1.55)])
     bullets(s, [
-        ("The model DID use them — the order-block features carry about 20% of total "
+        ("The model DID use them; the order-block features carry about 20% of total "
          "feature importance. This was not an ignored input.", 0),
         ("But the textbook part was the useless part: the 'price is inside a zone' flag "
          "scored 0.001 importance, because price is inside a live zone on only 3.5% of "
@@ -1132,11 +1133,11 @@ def s_orderblocks(prs):
     ], y=BODY_TOP + Inches(2.85), size=11, gap=4)
     notes(s, "This is your strongest single slide for demonstrating research method: a "
              "popular technique, implemented faithfully, measured, and rejected on "
-             "evidence — with an explanation of WHY it failed.")
+             "evidence, with an explanation of WHY it failed.")
 
 
 def s_proof_backtest(prs):
-    s = add_slide(prs, "Evidence — Backtest Run and Dashboard")
+    s = add_slide(prs, "Evidence: Backtest Run and Dashboard")
     placeholder(s, MARGIN, BODY_TOP + Inches(0.05), Inches(4.4), Inches(3.05),
                 "Terminal output of:\nscripts/run_backtest.py EURUSD 1h\n\n"
                 "Show the metrics block and the PASS/FAIL lines against targets.")
@@ -1150,12 +1151,12 @@ def s_proof_backtest(prs):
 
 
 def s_deployment(prs):
-    s = add_slide(prs, "Deployment — A Documented Engineering Finding")
+    s = add_slide(prs, "Deployment: A Documented Engineering Finding")
     bullets(s, [
         ("The plan was to run MetaTrader 5 headless in a Linux Docker container under Wine.",
          0, True),
         ("It cannot work. MetaTrader's Python API fails to initialise under Wine with "
-         "error -10005 (an inter-process communication timeout) — reproduced across three "
+         "error -10005 (an inter-process communication timeout), reproduced across three "
          "environments, including native x86 with no emulation, and including a "
          "byte-for-byte copy of a published working reference.", 1),
         ("The resolution:", 0, True),
@@ -1164,7 +1165,7 @@ def s_deployment(prs):
          "same API initialises on the first attempt.", 1),
         ("Why this belongs in the report:", 0, True),
         ("It is a negative engineering result with a clear cause, a reproduction, and a "
-         "working alternative — and it is exactly the kind of finding that saves the next "
+         "working alternative, and it is exactly the kind of finding that saves the next "
          "person weeks.", 1),
     ], size=11.5, gap=4, h=Inches(2.5))
 
@@ -1179,7 +1180,7 @@ def s_deployment(prs):
     line(s, Inches(5.65), y + Inches(0.27), Inches(6.35), y + Inches(0.27), back_arrow=True)
     label(s, Inches(2.65), y - Inches(0.2), "JSON over TCP", size=7.5, w=Inches(0.9))
     notes(s, "Say 'negative result' with confidence. You proved a published approach does "
-             "not work and documented why — that is a contribution.")
+             "not work and documented why; that is a contribution.")
 
 
 def s_gadel(prs):
@@ -1213,14 +1214,14 @@ def s_gadel(prs):
             y += Inches(0.42)
 
     textbox(s, MARGIN, Inches(4.72), CONTENT_W, Inches(0.4),
-            "Shared (highlighted): the abstract execution interface and the RPC boundary — "
+            "Shared (highlighted): the abstract execution interface and the RPC boundary, "
             "the two components this research designed and proved.",
             size=9.5, italic=True, color=NAVY, align=PP_ALIGN.CENTER)
     caption(s, f"Figure {next_fig()}: Architectural correspondence between the research "
                f"system and the live product", y=H - Inches(0.34))
     notes(s, "Be precise about the direction of transfer: the ARCHITECTURE and the Wine "
              "finding transferred. Gadel contains no machine learning and has never run "
-             "this project's model — do not claim its trading results as yours.")
+             "this project's model; do not claim its trading results as yours.")
 
 
 def s_gadel_honest(prs):
@@ -1230,16 +1231,16 @@ def s_gadel_honest(prs):
             "That the execution architecture works in production, under real conditions.",
             "That Wine is a dead end and native Windows is the correct deployment route.",
             "Five defects in this project's live-order path that only real trading "
-            "exposes — fill modes, thread affinity, magic numbers, lot rounding, "
-            "whitespace in server names — all since fixed here.",
+            "exposes: fill modes, thread affinity, magic numbers, lot rounding, "
+            "whitespace in server names, and all have since been fixed here.",
         ], RGBColor(0xEC, 0xF5, 0xEE), GOOD),
         (Inches(5.15), "IT DOES NOT SUPPORT", [
-            "Any trading claim in this report. It contains NO machine learning — "
+            "Any trading claim in this report. It contains NO machine learning, "
             "verified by a repository-wide search.",
             "It trades gold on hand-written rules; it has never run this project's "
             "model, volume gate, labelling method, currency pairs or timeframe.",
             "Therefore the win rate, profit factor, drawdown and Sharpe in this report "
-            "remain backtested results — which is an honest and defensible basis.",
+            "remain backtested results, which is an honest and defensible basis.",
         ], RGBColor(0xF6, 0xEC, 0xEC), BAD),
     ):
         box(s, x, BODY_TOP + Inches(0.05), Inches(4.4), Inches(0.34), head,
@@ -1266,7 +1267,7 @@ def s_gadel_honest(prs):
 
 
 def s_proof_gadel(prs):
-    s = add_slide(prs, "Evidence — The Live Deployment")
+    s = add_slide(prs, "Evidence: The Live Deployment")
     placeholder(s, MARGIN, BODY_TOP + Inches(0.05), Inches(4.4), Inches(3.05),
                 "MetaTrader 5 on the Windows host:\nTrade / History tab showing positions "
                 "placed by this system\n\nREDACT: account number, balance, server name")
@@ -1274,7 +1275,7 @@ def s_proof_gadel(prs):
                 "Gadel dashboard or terminal\nshowing the shared execution layer running "
                 "in production\n\nREDACT: account numbers, balances, API keys")
     caption(s, f"Figure {next_fig()}: Live execution evidence (identifying details redacted)")
-    notes(s, "Redaction is not optional — these are real accounts. Black boxes over "
+    notes(s, "Redaction is not optional: these are real accounts. Black boxes over "
              "account numbers, balances, server hostnames and any token.")
 
 
@@ -1284,7 +1285,7 @@ def s_impact(prs):
         ("Who benefits:", 0, True),
         ("Retail traders, who gain consistent rule execution and enforced risk limits "
          "instead of emotional decisions.", 1),
-        ("Students and researchers, who gain a fully reproducible evaluation method — "
+        ("Students and researchers, who gain a fully reproducible evaluation method: "
          "every number in this project has a command that regenerates it.", 1),
         ("Practitioners, who gain a documented negative result on deployment and on five "
          "widely-taught indicators.", 1),
@@ -1296,10 +1297,10 @@ def s_impact(prs):
     bullets(s, [
         ("Over 30 registrations on the live product's waiting list, with no paid "
          "advertising.", 0),
-        ("This is expressed interest, not revenue — and is described as such.", 0),
+        ("This is expressed interest, not revenue, and is described as such.", 0),
         ("The academic contribution stands independently of any commercial outcome.", 0),
     ], x=Inches(5.0), y=BODY_TOP + Inches(1.95), w=Inches(4.55), size=10.5, gap=5)
-    notes(s, "Say 'expressed interest', never 'customers' or 'willing to pay' — a "
+    notes(s, "Say 'expressed interest', never 'customers' or 'willing to pay': a "
              "waiting-list signup is not a purchase. Overstating this is the one thing "
              "that could damage your credibility on an otherwise careful project.")
 
@@ -1309,15 +1310,15 @@ def s_contribution(prs):
     bullets(s, [
         "A hybrid decision architecture in which a statistical volume filter and a "
         "Random Forest must agree, giving every trade both a statistical reason and a "
-        "model probability — a directly auditable design.",
-        "Empirical evidence that triple-barrier labelling — aligning the training target "
-        "with how a trade actually closes — is more consequential than any indicator "
+        "model probability, a directly auditable design.",
+        "Empirical evidence that triple-barrier labelling, aligning the training target "
+        "with how a trade actually closes, is more consequential than any indicator "
         "tested here, turning both pairs from loss to profit.",
         "Six documented negative results: RSI, MACD, ATR, higher-timeframe trend, "
         "time-of-day and order blocks each failed to generalise across two closely "
         "related currency pairs.",
         "A demonstration that a headline win rate can be produced by exit geometry alone, "
-        "with a no-skill baseline showing how to separate geometry from genuine skill — "
+        "with a no-skill baseline showing how to separate geometry from genuine skill, "
         "a method other studies can reuse.",
         "A reproducible, costed evaluation protocol: sealed chronological test set, "
         "confidence intervals on every rate, and a published command for every number.",
@@ -1337,14 +1338,14 @@ def s_undone(prs):
          "protocol are complete; the session needs calendar time because the volume gate "
          "fires roughly once or twice per pair per week.", 1),
         ("Remaining:", 0, True),
-        ("Chapters 4 and 5 of the report — the measured material and figures already "
+        ("Chapters 4 and 5 of the report: the measured material and figures already "
          "exist in the project documentation.", 1),
         ("Applying the documented factual corrections to Chapters 1–3.", 1),
         ("Identified for future work:", 0, True),
         ("Aligning the training label fully with the executed trade, most likely through "
          "separate long-side and short-side models.", 1),
-        ("Meta-labelling — a second model deciding whether to accept each primary "
-         "signal — the standard route to raising precision at fixed risk-reward.", 1),
+        ("Meta-labelling: a second model deciding whether to accept each primary "
+         "signal, and the standard route to raising precision at fixed risk-reward.", 1),
         ("Extending beyond two pairs and one timeframe to test generalisation properly.", 1),
     ], size=11.5, gap=4)
     notes(s, "Being specific about what is unfinished, and why, reads as control. The "
@@ -1431,7 +1432,7 @@ def s_thanks(prs):
     textbox(s, MARGIN, Inches(3.75), CONTENT_W, Inches(0.5),
             "AWOSUSI GABRIEL AYOMIDE   •   CSC/2019/079   •   CSC 504",
             size=11, color=GREY, align=PP_ALIGN.CENTER)
-    notes(s, "Have docs/DEFENCE_GUIDE.md open on a second screen — it holds prepared "
+    notes(s, "Have docs/DEFENCE_GUIDE.md open on a second screen; it holds prepared "
              "answers to the twelve most likely questions.")
 
 
@@ -1531,7 +1532,36 @@ def build() -> Path:
     return OUT
 
 
+def write_speaker_notes(deck: Path) -> Path:
+    """Export every speaker note as a printable rehearsal script.
+
+    Generated here rather than by hand so it cannot drift out of sync with the deck.
+    """
+    prs = Presentation(str(deck))
+    out = [
+        "# Defence Speaker Notes (CSC 504)",
+        "",
+        f"Rehearsal script for `{deck.relative_to(ROOT)}`. One entry per slide.",
+        "Generated by `scripts/make_defence_deck.py`; edit the script, not this file.",
+        "",
+    ]
+    for i, slide in enumerate(prs.slides, 1):
+        title = ""
+        for shape in slide.shapes:
+            if shape.has_text_frame and shape.text_frame.text.strip():
+                first = shape.text_frame.text.strip().splitlines()[0]
+                if len(first) > 3 and not first.isdigit():
+                    title = first
+                    break
+        note = (slide.notes_slide.notes_text_frame.text.strip()
+                if slide.has_notes_slide else "")
+        out += [f"## Slide {i}: {title or '(untitled)'}", "", note or "_(no note)_", ""]
+    NOTES_OUT.write_text("\n".join(out))
+    return NOTES_OUT
+
+
 if __name__ == "__main__":
     path = build()
     print(f"Wrote {path.relative_to(ROOT)}")
     print(f"Figures numbered 1..{_fig['n']}")
+    print(f"Wrote {write_speaker_notes(path).relative_to(ROOT)}")
