@@ -342,11 +342,15 @@ What it means:
   model does no better than a random direction (model PF ≥ random in only 30% of seeds;
   `baseline_noskill.py` with the three switches on).
 
-**The default is kept for now — a decision for the project owner (docs/todo.md §14).** The
-unaligned default is still an honest out-of-sample measurement: the mismatch is a design
-inconsistency, not leakage (no future data reaches any feature). But its profit depends on
-holding past the label's horizon and on the short side, neither of which the model was
-directly trained on. That must be stated wherever the default's numbers are quoted.
+**Decision (2026-09-17): the default is kept, and reported with this caveat attached.**
+The unaligned default is still an honest out-of-sample measurement — the mismatch is a
+design inconsistency, not leakage (no future data reaches any feature) — and it is the
+only configuration meeting the report's headline win-rate target on both pairs. But its
+profit depends on holding past the label's horizon and on the short side, neither of which
+the model was directly trained on, so that must be stated wherever its numbers are quoted.
+Where the question is whether the *model* works, quote the **far-TP** configuration
+instead: it beats every random-direction seed on both pairs (see the no-skill baseline).
+The alignment switches stay off by default.
 
 ---
 

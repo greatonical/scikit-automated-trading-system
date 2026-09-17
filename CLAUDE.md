@@ -117,8 +117,11 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
   (2) label ≠ trade (long-only 24-bar label vs long + short trades held to SL/TP); fully
   aligned via `USE_TIME_EXIT` / `LABEL_DYNAMIC_SL` / `ALLOW_SHORTS`, the strategy loses
   on both pairs; (3) ~30 trades per pair → wide intervals.
-- **Open decision (owner's call):** keep the close-TP default or switch (`docs/todo.md` §14).
-  Don't change defaults without being asked — the switches exist and are off.
+- **Default decided (2026-09-17):** the close-TP config **stays** the shipped default (it
+  is the only one meeting the report's win-rate target on both pairs). Quote it with its
+  caveats, and use the **far-TP** config wherever the question is whether the model itself
+  has skill (it beats every random-direction seed). The alignment switches stay off.
+  Don't change defaults without being asked.
 - **4h** (rebuilt from 1h at load time): EUR/USD loses, GBP/USD profitable — mixed; 1h is primary.
   (The old "4h makes zero trades" was a stale zero-volume cache, now fixed.)
 - **Module 12 (live MT5) is a resolved dead end under Wine.** `mt5.initialize()` fails

@@ -235,11 +235,20 @@ snapshot confirms every documented number is unchanged. **218 tests pass.**
 - [x] Broker rejection codes return a readable reason (10016/10018/10019/10027/10030).
 - [x] Login/server whitespace stripped (MT5 matches server names exactly).
 
-**Open decisions / remaining work**
-- [ ] **Choose the default.** Keep the unaligned close-TP default (win-rate target met, but win rate ≈ geometry and profit relies on untrained trade management), or switch to a variant with stronger evidence of model skill (e.g. far-TP: beats every random seed). Numbers: `docs/RESULTS.md` "No-skill baseline" + "Label/trade alignment".
+**Decisions taken**
+- [x] **Default config — decided 2026-09-17: the close-TP default stays** (SL 1.2% / TP 0.4%).
+  It is the only configuration meeting the report's headline win-rate target on both pairs,
+  and no code changes. Chapter 4 must present it with its two measured caveats (random
+  direction wins 67–69% with the same exits; profit depends on trade management the label
+  doesn't model) and quote the **far-TP** config as the evidence that the model itself has
+  skill — it beats every random seed on both pairs. Numbers: `docs/RESULTS.md`
+  "No-skill baseline" + "Label/trade alignment". The alignment switches stay OFF.
+
+**Remaining work**
 - [ ] Apply `docs/REPORT_CORRECTIONS.md` to Chapters 1–3 (Word version).
 - [ ] Write Chapters 4 and 5.
-- [ ] Known gaps kept as-is: latency never measured live; Sharpe per-trade; `SIGNAL_LOG_FILE`/`LOG_LEVEL` unused; no git repo.
+- [ ] Known gaps kept as-is: latency never measured live; Sharpe per-trade;
+  `SIGNAL_LOG_FILE`/`LOG_LEVEL` unused.
 
 ---
 
