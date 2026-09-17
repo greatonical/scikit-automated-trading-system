@@ -26,6 +26,17 @@ from src.execution.base import ExecutionHandler
 
 logger = logging.getLogger(__name__)
 
+# Broker rejection codes worth explaining rather than echoing as a bare number.
+# Each of these was hit in production by a sibling project on the same broker family
+# (docs/GADEL_ENGINE_COMPARISON.md).
+RETCODE_HINTS = {
+    10016: "invalid stops — SL/TP sits inside the symbol's minimum stop distance",
+    10018: "market closed for this symbol",
+    10019: "not enough money for the requested volume",
+    10027: "AutoTrading is disabled — enable the Algo Trading button in the terminal",
+    10030: "unsupported fill mode for this symbol",
+}
+
 
 class MT5ExecutionHandler(ExecutionHandler):
     """Routes orders to a real (demo) MT5 terminal via the MetaTrader5 API."""
@@ -36,9 +47,11 @@ class MT5ExecutionHandler(ExecutionHandler):
         password: str | None = None,
         server: str | None = None,
     ) -> None:
-        self.login = login or settings.MT5_LOGIN
+        # MT5 matches the server name letter-for-letter, spaces included: a stored
+        # trailing space makes every login fail with a misleading error.
+        self.login = (login or settings.MT5_LOGIN).strip()
         self.password = password or settings.MT5_PASSWORD
-        self.server = server or settings.MT5_SERVER
+        self.server = (server or settings.MT5_SERVER).strip()
         self._mt5 = None          # the MetaTrader5 module, imported in connect()
         self.connected = False
 
@@ -142,17 +155,19 @@ class MT5ExecutionHandler(ExecutionHandler):
             "sl": float(sl),
             "tp": float(tp),
             "deviation": settings.MT5_DEVIATION_POINTS,
+            "magic": settings.MT5_MAGIC_NUMBER,
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
+            "type_filling": self._filling_mode(mt5, info),
         }
         result = mt5.order_send(request)
         ok = result is not None and result.retcode == mt5.TRADE_RETCODE_DONE
+        retcode = getattr(result, "retcode", None)
         logger.info(
             "MT5 order %s %s units=%.0f lots=%.2f -> %s",
             side, symbol, volume, lots,
-            "filled" if ok else f"rejected({getattr(result, 'retcode', '?')})",
+            "filled" if ok else f"rejected({retcode}: {RETCODE_HINTS.get(retcode, '?')})",
         )
-        return {
+        out = {
             "ticket": getattr(result, "order", None),
             "symbol": symbol,
             "side": side,
@@ -162,16 +177,27 @@ class MT5ExecutionHandler(ExecutionHandler):
             "sl": sl,
             "tp": tp,
             "status": "filled" if ok else "rejected",
-            "retcode": getattr(result, "retcode", None),
+            "retcode": retcode,
         }
+        if not ok and retcode in RETCODE_HINTS:
+            out["reason"] = RETCODE_HINTS[retcode]
+        return out
 
     def get_open_positions(self) -> list:
+        """Open positions. By default only ours (see MT5_ONLY_OWN_POSITIONS).
+
+        MT5 reports magic 0 for hand-placed trades, so without this filter a human
+        trading the same account would appear in — and could be closed by — our
+        position list.
+        """
         self._require_connected()
         positions = self._mt5.positions_get()
         if positions is None:
             return []
         out = []
         for p in positions:
+            if not self._is_ours(p):
+                continue
             info = self._mt5.symbol_info(p.symbol)
             contract = (
                 self._contract_size(info) if info is not None
@@ -183,6 +209,7 @@ class MT5ExecutionHandler(ExecutionHandler):
                 "side": "BUY" if p.type == self._mt5.POSITION_TYPE_BUY else "SELL",
                 "volume": p.volume * contract,   # units (engine convention)
                 "lots": p.volume,
+                "magic": getattr(p, "magic", 0),
                 "price": p.price_open,
                 "sl": p.sl,
                 "tp": p.tp,
@@ -199,6 +226,10 @@ class MT5ExecutionHandler(ExecutionHandler):
         if not positions:
             return {"ticket": ticket, "status": "not_found"}
         pos = positions[0]
+        if not self._is_ours(pos):
+            # Never close a trade the account owner placed by hand.
+            return {"ticket": ticket, "symbol": pos.symbol, "status": "refused",
+                    "reason": "position was not opened by this system"}
 
         tick = mt5.symbol_info_tick(pos.symbol)
         if tick is None:
@@ -238,6 +269,32 @@ class MT5ExecutionHandler(ExecutionHandler):
     # ------------------------------------------------------------------ #
     # Internals
     # ------------------------------------------------------------------ #
+    @staticmethod
+    def _is_ours(position) -> bool:
+        """True if this position carries our magic number (or filtering is off)."""
+        if not settings.MT5_ONLY_OWN_POSITIONS:
+            return True
+        return getattr(position, "magic", 0) == settings.MT5_MAGIC_NUMBER
+
+    @staticmethod
+    def _filling_mode(mt5, info):
+        """Pick a fill mode the broker actually accepts for this symbol.
+
+        ``symbol_info.filling_mode`` is a bitmask of the SYMBOL_FILLING_* flags.
+        Requesting an unsupported mode is rejected with retcode 10030 — HFMarkets
+        symbols, for instance, accept FOK only, so the IOC this handler used to
+        hardcode would have bounced every live order.
+        """
+        mask = int(getattr(info, "filling_mode", 0) or 0)
+        for flag, order_filling in (
+            (getattr(mt5, "SYMBOL_FILLING_FOK", 1), getattr(mt5, "ORDER_FILLING_FOK", None)),
+            (getattr(mt5, "SYMBOL_FILLING_IOC", 2), getattr(mt5, "ORDER_FILLING_IOC", None)),
+        ):
+            if mask & flag and order_filling is not None:
+                return order_filling
+        # Neither advertised: RETURN is the safe default for symbols that allow it.
+        return getattr(mt5, "ORDER_FILLING_RETURN", mt5.ORDER_FILLING_IOC)
+
     @staticmethod
     def _contract_size(info) -> float:
         """Units per 1.0 lot for this symbol (broker value, else standard lot)."""

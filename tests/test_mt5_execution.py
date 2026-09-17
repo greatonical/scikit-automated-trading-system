@@ -15,6 +15,7 @@ import types
 
 import pytest
 
+from config import settings
 from src.execution.base import ExecutionHandler
 from src.execution.mt5 import MT5ExecutionHandler
 from src.risk_manager import RiskManager
@@ -32,10 +33,21 @@ def _fake_mt5():
     m.POSITION_TYPE_SELL = 1
     m.TRADE_ACTION_DEAL = 1
     m.ORDER_TIME_GTC = 0
+    # Real MT5 values: the ORDER_FILLING_* an order requests, and the
+    # SYMBOL_FILLING_* bitmask a symbol advertises.
+    m.ORDER_FILLING_FOK = 0
     m.ORDER_FILLING_IOC = 1
+    m.ORDER_FILLING_RETURN = 2
+    m.SYMBOL_FILLING_FOK = 1
+    m.SYMBOL_FILLING_IOC = 2
     m.TRADE_RETCODE_DONE = 10009
 
-    state = {"logged_in": False, "shutdown": False, "requests": [], "tick": True}
+    state = {
+        "logged_in": False, "shutdown": False, "requests": [], "tick": True,
+        # HFMarkets-like default: this symbol accepts FOK only.
+        "filling_mode": m.SYMBOL_FILLING_FOK,
+        "retcode": m.TRADE_RETCODE_DONE,
+    }
     m._state = state
 
     def initialize():
@@ -61,22 +73,30 @@ def _fake_mt5():
         return types.SimpleNamespace(
             trade_contract_size=100_000.0, volume_step=0.01,
             volume_min=0.01, volume_max=50.0,
+            filling_mode=state["filling_mode"],
         )
 
     def order_send(request):
         state["requests"].append(request)
         return types.SimpleNamespace(
-            retcode=m.TRADE_RETCODE_DONE, order=555, price=request["price"]
+            retcode=state["retcode"], order=555, price=request["price"]
         )
 
     def positions_get(ticket=None):
-        pos = types.SimpleNamespace(
+        ours = types.SimpleNamespace(
             ticket=555, symbol="EURUSD", type=m.POSITION_TYPE_BUY,
             volume=0.1, price_open=1.10, sl=1.09, tp=1.12, profit=5.0,
+            magic=settings.MT5_MAGIC_NUMBER,
         )
-        if ticket is not None and ticket != 555:
-            return ()
-        return (pos,)
+        # A trade the account owner placed by hand: MT5 reports magic 0.
+        manual = types.SimpleNamespace(
+            ticket=777, symbol="XAUUSD", type=m.POSITION_TYPE_SELL,
+            volume=0.5, price_open=2400.0, sl=2410.0, tp=2380.0, profit=-3.0,
+            magic=0,
+        )
+        if ticket is not None:
+            return tuple(p for p in (ours, manual) if p.ticket == ticket)
+        return (ours, manual)
 
     m.initialize = initialize
     m.login = login
@@ -133,6 +153,14 @@ def test_connect_logs_in(connected_handler):
     assert connected_handler._mt5._state["logged_in"] is True
 
 
+def test_credentials_are_whitespace_stripped(monkeypatch):
+    """MT5 matches server names letter-for-letter; a stored trailing space breaks login."""
+    monkeypatch.setitem(sys.modules, "MetaTrader5", _fake_mt5())
+    h = MT5ExecutionHandler(login=" 5012345678 ", password="x", server="HFMarkets-Demo ")
+    assert h.login == "5012345678"
+    assert h.server == "HFMarkets-Demo"
+
+
 def test_connect_missing_credentials_raises(monkeypatch):
     monkeypatch.setitem(sys.modules, "MetaTrader5", _fake_mt5())
     # Force settings empty too, so the handler's fallback can't pick up real
@@ -179,6 +207,41 @@ def test_place_invalid_side_raises(connected_handler):
         connected_handler.place_order("EURUSD", "HOLD", 10_000, 1.0, 1.2)
 
 
+def test_fill_mode_follows_what_the_symbol_accepts(connected_handler):
+    """Hardcoding IOC is what retcode 10030 looks like on an FOK-only broker."""
+    mt5 = connected_handler._mt5
+    state = mt5._state
+
+    # FOK-only (the HFMarkets case that rejected the old hardcoded IOC)
+    connected_handler.place_order("EURUSD", "BUY", 10_000, sl=1.09, tp=1.12)
+    assert state["requests"][-1]["type_filling"] == mt5.ORDER_FILLING_FOK
+
+    # IOC-only
+    state["filling_mode"] = mt5.SYMBOL_FILLING_IOC
+    connected_handler.place_order("EURUSD", "BUY", 10_000, sl=1.09, tp=1.12)
+    assert state["requests"][-1]["type_filling"] == mt5.ORDER_FILLING_IOC
+
+    # Symbol advertises neither -> fall back to RETURN rather than guessing
+    state["filling_mode"] = 0
+    connected_handler.place_order("EURUSD", "BUY", 10_000, sl=1.09, tp=1.12)
+    assert state["requests"][-1]["type_filling"] == mt5.ORDER_FILLING_RETURN
+
+
+def test_orders_carry_our_magic_number(connected_handler):
+    connected_handler.place_order("EURUSD", "BUY", 10_000, sl=1.09, tp=1.12)
+    sent = connected_handler._mt5._state["requests"][-1]
+    assert sent["magic"] == settings.MT5_MAGIC_NUMBER
+    assert sent["magic"] != 0          # 0 is MT5's "a human placed this"
+
+
+def test_rejection_explains_the_broker_code(connected_handler):
+    connected_handler._mt5._state["retcode"] = 10027   # AutoTrading disabled
+    res = connected_handler.place_order("EURUSD", "BUY", 10_000, sl=1.09, tp=1.12)
+    assert res["status"] == "rejected"
+    assert res["retcode"] == 10027
+    assert "AutoTrading" in res["reason"]
+
+
 def test_units_round_down_to_lot_step(connected_handler):
     # 12,345 units = 0.12345 lot -> rounded DOWN to 0.12 (never enlarged).
     res = connected_handler.place_order("EURUSD", "BUY", 12_345, sl=1.09, tp=1.12)
@@ -213,11 +276,31 @@ def test_riskmanager_plan_becomes_sane_lot_size(connected_handler):
     assert connected_handler._mt5._state["requests"][-1]["volume"] == pytest.approx(0.07)
 
 
+def test_positions_exclude_hand_placed_trades(connected_handler):
+    """A human trading the same account must not appear in — or be closed from — ours."""
+    tickets = [p["ticket"] for p in connected_handler.get_open_positions()]
+    assert tickets == [555]            # 777 (magic 0) is the owner's own trade
+
+
+def test_positions_include_everything_when_filtering_is_off(connected_handler, monkeypatch):
+    monkeypatch.setattr(settings, "MT5_ONLY_OWN_POSITIONS", False)
+    tickets = [p["ticket"] for p in connected_handler.get_open_positions()]
+    assert tickets == [555, 777]
+
+
+def test_close_refuses_a_position_we_did_not_open(connected_handler):
+    res = connected_handler.close_position(777)
+    assert res["status"] == "refused"
+    assert "not opened by this system" in res["reason"]
+    assert connected_handler._mt5._state["requests"] == []   # nothing was sent
+
+
 def test_get_open_positions_shape(connected_handler):
     positions = connected_handler.get_open_positions()
     assert len(positions) == 1
     p = positions[0]
     assert p["ticket"] == 555
+    assert p["magic"] == settings.MT5_MAGIC_NUMBER
     assert p["side"] == "BUY"
     assert {"symbol", "volume", "price", "sl", "tp"} <= set(p)
     # Broker's 0.1 lot is reported back in engine units.

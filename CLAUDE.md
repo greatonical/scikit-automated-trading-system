@@ -14,9 +14,10 @@ performance**. A suspiciously good number is a bug, not a win.
 Three authorities, in precedence order:
 
 1. `README.md` — the canonical build spec (§ numbers referenced throughout the code).
-2. `GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3_corrected.md` — the academic write-up
-   (background/justification only). Where it disagrees with the README, README wins.
-   Known factual errors in it are listed in `docs/REPORT_CORRECTIONS.md` (not applied).
+2. `GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md` — the academic write-up
+   (background/justification only), current as of 2026-09-17. Where it disagrees with
+   the README, README wins. Known factual errors in it are listed in
+   `docs/REPORT_CORRECTIONS.md` (listed for the author to apply; never edit the report).
 3. `docs/` — the living record of what was actually built, measured, and decided.
 
 ## Hard constraints — never violate
@@ -73,13 +74,16 @@ scripts/inspect_model.py  human-readable view of models/*.pkl incl. provenance
 scripts/make_progress_docx.py one-off: renders the June progress report (needs python-docx)
 docker/engine/            engine + dashboard image (Linux Python, no Wine)
 docker/mt5/               Wine + xvfb + MT5 image — documented DEAD END, see below
-tests/                    210 tests, all passing
+tests/                    218 tests, all passing
 ```
 
 ## Commands
 
+Full setup + runbook for a human (dashboard walkthrough, mock vs live, troubleshooting):
+`docs/COMMANDS.md`.
+
 ```bash
-.venv/bin/python -m pytest -q                          # 210 pass, 2 network deselected
+.venv/bin/python -m pytest -q                          # 218 pass, 2 network deselected
 .venv/bin/python -m pytest -m network -v               # live Yahoo smoke tests
 .venv/bin/python scripts/run_backtest.py EURUSD 1h     # canonical evaluation (also GBPUSD, 4h)
 .venv/bin/python scripts/sweep_winrate.py EURUSD 1h    # exit-geometry frontier
@@ -100,7 +104,7 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
 
 ## Current state (verified 2026-09-15)
 
-- **Modules 1–11 complete**, 210 tests pass, everything documented in `docs/`.
+- **Modules 1–11 complete**, 218 tests pass, everything documented in `docs/`.
 - **Improvement phase A–E complete + full audit done** (`docs/AUDIT_2026-09-15.md`).
   Default config = triple-barrier label (Step A) + close-TP exits (Step E, `SL 1.2% / TP 0.4%`).
 - Held-out results with costs, 1h (test 20 Jan → 12 Jun 2026):

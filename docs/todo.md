@@ -14,9 +14,12 @@ the last mile and must never block the engine or the backtest results.
 - `docs/DEVIATIONS_FROM_SPEC.md` — every change vs the README/report, with reasons.
 - `docs/RECOMMENDATIONS.md` — weaknesses + how to improve.
 - `docs/TRIPLE_BARRIER_EXPLAINED.md`, `docs/MT5_INTEGRATION_PLAN.md`, `docs/MT5_CONTAINER_TESTING.md`.
+- `docs/COMMANDS.md` — setup, every command, dashboard walkthrough, mock vs live, troubleshooting.
+- `docs/DEFENCE_GUIDE.md` — viva answers + how to run/demo the system.
 - `docs/STRATEGY_CONFIGS.md` — the three exit profiles side by side.
 - `docs/WINE_VERDICT.md` — why live MT5 needs native Windows.
 - `docs/AUDIT_2026-09-15.md` — full audit: findings, fixes, evidence.
+- `docs/GADEL_ENGINE_COMPARISON.md` — the sibling project: what it built, what it proved, what differs.
 - `docs/REPORT_CORRECTIONS.md` — factual corrections to apply to Chapters 1–3.
 
 ---
@@ -219,6 +222,18 @@ trade-for-trade after the refactors. **210 tests pass.**
 - [x] Dashboard "Reference price" now used (paper fill price); Live mode records `latency_ms`.
 - [x] Tautological no-deep-learning test replaced (scans all code + requirements); weak futures-off test strengthened.
 - [x] Duplicate `PROGRESS_REPORT_2026-06-17 copy.md` removed; stale docs brought up to date.
+
+### Live-path fixes (2026-09-17) ✅ DONE
+
+Five defects in the MT5 handler, each one a problem a sibling production system hit for
+real (`docs/GADEL_ENGINE_COMPARISON.md` §8). None touches the backtester — the regression
+snapshot confirms every documented number is unchanged. **218 tests pass.**
+
+- [x] Fill mode read from the symbol instead of hardcoded IOC (HFMarkets rejects IOC with `10030`).
+- [x] All MT5 calls pinned to one thread (the library binds to the first calling thread; our threaded RPC server would have failed on the second order).
+- [x] Orders carry `MT5_MAGIC_NUMBER`; positions filtered to ours; closing a hand-placed trade is refused.
+- [x] Broker rejection codes return a readable reason (10016/10018/10019/10027/10030).
+- [x] Login/server whitespace stripped (MT5 matches server names exactly).
 
 **Open decisions / remaining work**
 - [ ] **Choose the default.** Keep the unaligned close-TP default (win-rate target met, but win rate ≈ geometry and profit relies on untrained trade management), or switch to a variant with stronger evidence of model skill (e.g. far-TP: beats every random seed). Numbers: `docs/RESULTS.md` "No-skill baseline" + "Label/trade alignment".

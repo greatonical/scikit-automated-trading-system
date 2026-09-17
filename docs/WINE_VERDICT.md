@@ -50,8 +50,24 @@ A sibling project (`gadel-engine`) ran this exact investigation to the ground ov
 
 The cause, in plain terms: MT5's Python integration needs the terminal and the
 library to talk over a local Windows IPC channel. On native Windows that's a
-first-class OS feature. Under Wine the terminal's IPC subsystem never starts.
-MetaQuotes does not test on Wine; this is a real, hard edge, not a config gap.
+first-class OS feature. Under Wine the terminal's IPC subsystem never starts —
+their proof is the terminal's own log: it prints three startup lines and then goes
+silent, never reaching `Network 'server': connecting…`. MetaQuotes does not test on
+Wine; this is a real, hard edge, not a config gap.
+
+Their re-open criteria, worth repeating here: only "a reference that is reproducible
+from its committed code alone, OR a confirmed fix for the silent
+network-engine-never-starts symptom". And explicitly: **bundling a pre-installed MT5
+folder does NOT fix `-10005`** — the failure is runtime IPC, not the install.
+
+> **Correct a claim made about this repo.** `gadel-engine/docs/cloud-mt5/MODE_B_PLAN.md`
+> cites *our* `docker/mt5/Dockerfile`, `entrypoint.sh` and `mt5_service.py` as
+> "all confirmed working, headless" and used them as its lift-from reference. That is
+> **not** true: here the Wine container built and the RPC server ran, but the MetaQuotes
+> installer never produced `terminal64.exe`, so `mt5.initialize()` never had a terminal
+> to attach to (see `docs/MT5_CONTAINER_TESTING.md`). Their own byte-for-byte
+> replication of a public working reference then failed with `-10005` anyway. If that
+> plan is ever revisited, correct the claim there.
 
 ## The real deployment path (what production uses)
 

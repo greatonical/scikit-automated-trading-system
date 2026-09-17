@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import socketserver
+from concurrent.futures import ThreadPoolExecutor
 
 from config import settings
 from src.execution import rpc_protocol as rpc
@@ -29,6 +30,13 @@ logger = logging.getLogger("mt5_service")
 
 # One shared handler for the single MT5 terminal instance (README §13).
 _handler = None
+
+# Every MetaTrader5 call must come from ONE thread: the library binds the terminal
+# connection to whichever thread called initialize() first. This server answers each
+# request on a new thread, so without funnelling the work onto a single worker the
+# SECOND order would fail with an IPC error. One worker also serialises access, which
+# a single terminal requires anyway.
+_mt5_worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mt5")
 
 
 def _get_handler():
@@ -45,11 +53,20 @@ def _get_handler():
 
 
 def dispatch(method: str, args: dict) -> dict:
-    """Map an RPC method name to the handler call; return a response dict."""
+    """Handle one RPC call, running MT5 work on the single pinned worker thread."""
+    if method == "ping":
+        # Answered without touching MT5, so a wedged terminal still reports liveness.
+        return rpc.ok_response("pong")
     try:
-        if method == "ping":
-            return rpc.ok_response("pong")
+        return _mt5_worker.submit(_dispatch_on_worker, method, args).result()
+    except Exception as exc:  # noqa: BLE001 - report back to the client
+        logger.exception("RPC %s failed to dispatch", method)
+        return rpc.error_response(f"{type(exc).__name__}: {exc}")
 
+
+def _dispatch_on_worker(method: str, args: dict) -> dict:
+    """Map an RPC method name to the handler call; runs on the MT5 worker thread."""
+    try:
         handler = _get_handler()
 
         if method == "connect":

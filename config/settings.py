@@ -387,6 +387,16 @@ FX_STANDARD_LOT_UNITS = 100_000
 # Max price deviation (points) MT5 may fill a market order away from the request.
 MT5_DEVIATION_POINTS = 20
 
+# Magic number stamped on every order this system places. MT5 reports magic 0 for
+# trades a human placed by hand in the terminal, so this is what tells our positions
+# apart from the account owner's. (A sibling project filed 15 manual trades against a
+# strategy for want of this — docs/GADEL_ENGINE_COMPARISON.md.)
+MT5_MAGIC_NUMBER = _env_int("MT5_MAGIC_NUMBER", 20260917)
+
+# Manage only positions carrying our magic number. False = see and close every
+# position on the account: fine on a dedicated account, dangerous on a shared one.
+MT5_ONLY_OWN_POSITIONS = _env_str("MT5_ONLY_OWN_POSITIONS", "true").lower() == "true"
+
 
 # --------------------------------------------------------------------------- #
 # MT5 credentials (README §9 — demo account only, from .env, never hardcoded)

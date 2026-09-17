@@ -32,3 +32,6 @@ htmlcov/
 .idea/
 .vscode/
 *.swp
+
+# Claude Code local permissions (machine-specific)
+.claude/settings.local.json

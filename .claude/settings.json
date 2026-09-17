@@ -18,7 +18,19 @@
       "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python -m pytest -q -p no:warnings)",
       "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python scripts/inspect_model.py)",
       "Bash(find /Users/admin/Documents/Projects/BackendProjects/gadel-engine/docs -iname *retro*)",
-      "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python -m compileall -q src scripts dashboard config tests)"
+      "Bash(/Users/admin/Documents/Projects/BotsProjects/scikit-automated-trading-system/.venv/bin/python -m compileall -q src scripts dashboard config tests)",
+      "Bash(git -C /Users/admin/Documents/Projects/BackendProjects/gadel-engine log --oneline --date=short --pretty='%ad %s')",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(awk '{print $2}')",
+      "Bash(find /Users/admin -maxdepth 4 -iname \"*AWOSUSI*CHAPTER*1-3*\" -not -path \"*/.venv/*\" 2>/dev/null | head -20)",
+      "Read(//Users/admin/**)",
+      "Bash(cp \"/Users/admin/Downloads/GABRIEL AWOSUSI PROJECT REPORT \\(CHAPTER 1-3\\).md\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && grep -c \"FOR THE FOREIGN EXCHANGE MARKET\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && grep -c \"REFERENCES\" \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3.md\" && rm \"GABRIEL_AWOSUSI_PROJECT_REPORT_CHAPTER_1-3_corrected.md\" && echo \"current copy in place, stale copy removed\" && ls *.md)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git commit *)"
+    ],
+    "additionalDirectories": [
+      "/Users/admin/Downloads"
     ]
   }
 }

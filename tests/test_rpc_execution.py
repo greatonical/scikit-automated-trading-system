@@ -25,18 +25,22 @@ class _FakeHandler(ExecutionHandler):
     def __init__(self):
         self.connected = False
         self.orders = []
+        self.threads = set()      # which thread each call ran on
 
     def connect(self):
+        self.threads.add(threading.get_ident())
         self.connected = True
         return True
 
     def place_order(self, symbol, side, volume, sl, tp, price=None):
+        self.threads.add(threading.get_ident())
         rec = {"ticket": 1, "symbol": symbol, "side": side, "volume": volume,
                "price": price or 1.10, "sl": sl, "tp": tp, "status": "filled"}
         self.orders.append(rec)
         return rec
 
     def get_open_positions(self):
+        self.threads.add(threading.get_ident())
         return self.orders
 
     def close_position(self, ticket, price=None):
@@ -130,6 +134,19 @@ def test_close_position_over_rpc(client):
 def test_server_reports_unknown_method(client):
     with pytest.raises(RuntimeError, match="unknown method"):
         client._call("does_not_exist")
+
+
+def test_all_mt5_calls_run_on_one_thread(client, rpc_server):
+    """MetaTrader5 binds the terminal to the thread that first connected, but the
+    server answers each request on a NEW thread — so every call must be funnelled
+    onto a single pinned worker or the second order fails with an IPC error."""
+    _, _, fake = rpc_server
+    client.connect()
+    for _ in range(3):
+        client.place_order("EURUSD", "BUY", 10_000, 1.09, 1.12, price=1.10)
+        client.get_open_positions()
+    assert len(fake.threads) == 1
+    assert fake.threads != {threading.get_ident()}   # and not the test's own thread
 
 
 # --------------------------------------------------------------------------- #
