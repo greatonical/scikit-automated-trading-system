@@ -22,6 +22,13 @@ Needs python-pptx (not a core dependency):  .venv/bin/pip install python-pptx
 Font: the deck is set in Montserrat, which must be installed on the machine that OPENS
 the file (it is installed in ~/Library/Fonts here). If you must present from a machine
 without it, set FONT = "Arial" below and regenerate.
+
+Keynote: the deck is built on docs/deck_base.pptx, NOT on python-pptx's bundled
+template. python-pptx's notes master makes Keynote reject the whole file ("The file
+format is invalid") as soon as any slide carries a speaker note; PowerPoint and Google
+Slides accept it. This was isolated by driving Keynote from AppleScript: an otherwise
+identical file opens, and adding one speaker note makes it fail. deck_base.pptx is a
+real PowerPoint file with its slides and media stripped, so its notes master works.
 """
 from __future__ import annotations
 
@@ -39,6 +46,11 @@ from pptx.oxml.ns import qn                                      # noqa: E402
 from pptx.util import Emu, Inches, Pt                            # noqa: E402
 
 OUT = ROOT / "docs" / "DEFENCE_PRESENTATION.pptx"
+
+# Base template — see the Keynote note in the module docstring. Without it the deck
+# still builds, but any machine running Keynote will refuse to open it.
+BASE = ROOT / "docs" / "deck_base.pptx"
+_R_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
 
 # --------------------------------------------------------------------------- #
 # Design tokens
@@ -165,8 +177,35 @@ def _set_slide_size(prs, width, height):
         del sld_sz.attrib["type"]
 
 
+def _base_presentation():
+    """Open the base template and remove any slides it ships with.
+
+    Falls back to python-pptx's own template if the base is missing — the deck will
+    build, but Keynote will not open it (see the module docstring).
+    """
+    if not BASE.exists():
+        print(f"  ! WARNING: {BASE.name} missing — falling back to the python-pptx "
+              f"template. The result will NOT open in Keynote.")
+        return Presentation()
+    prs = Presentation(str(BASE))
+    sld_id_lst = prs.slides._sldIdLst
+    for sld in list(sld_id_lst):
+        prs.part.drop_rel(sld.get(_R_ID))
+        sld_id_lst.remove(sld)
+    return prs
+
+
+def _blank_layout(prs):
+    """The emptiest layout available in whatever template we are based on."""
+    return min(prs.slide_layouts, key=lambda layout: len(layout.placeholders))
+
+
 def add_slide(prs, title=None, number=True):
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    slide = prs.slides.add_slide(_blank_layout(prs))
+    # Drop any placeholders the layout carries: every element here is positioned
+    # explicitly, and inherited "Click to add title" boxes would print.
+    for ph in list(slide.placeholders):
+        ph._element.getparent().remove(ph._element)
     if title:
         textbox(slide, MARGIN, Inches(0.26), CONTENT_W, Inches(0.5),
                 title, size=22, bold=True, color=NAVY)
@@ -1431,6 +1470,14 @@ def _validate(path: Path) -> None:
     if sld_sz and "type=" in sld_sz.group(0):
         raise ValueError(f"sldSz still declares a size type: {sld_sz.group(0)}")
 
+    # Speaker notes are the rehearsal script; losing them would ship a worse deck
+    # silently. They are also the reason the base template exists.
+    with zipfile.ZipFile(path) as z:
+        n_notes = sum(1 for n in z.namelist()
+                      if n.startswith("ppt/notesSlides/notesSlide"))
+    if n_notes == 0:
+        raise ValueError("saved deck contains no speaker notes")
+
     # Touch every coordinate so an unparsable value raises instead of being skipped.
     for slide in Presentation(str(path)).slides:
         for shape in slide.shapes:
@@ -1439,7 +1486,7 @@ def _validate(path: Path) -> None:
 
 # --------------------------------------------------------------------------- #
 def build() -> Path:
-    prs = Presentation()
+    prs = _base_presentation()
     _set_slide_size(prs, W, H)
 
     s_title(prs)
