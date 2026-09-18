@@ -39,7 +39,7 @@ CRITERIA = [
     ("Consistency", [5, 6]),
     ("Confidence", [9]),
     ("Clarity of trade explanation", [11]),
-    ("Trust in the two-gate rule", [12]),
+    ("Trust in automated execution", [12]),
     ("Usefulness of risk limits", [13]),
 ]
 LIKERT_WORDS = {

@@ -4,15 +4,14 @@ Closes the supervisor's requirement for "feedback and analysis from users" in Ch
 (`docs/SUPERVISOR_NOTES.md` §1): at least 50 respondents, a table of usability
 criteria and a table of responses.
 
-## 0. The one rule that keeps this valid
+## 0. What is evaluated
 
-Respondents are recruited **from** Gadel's trader community, but they evaluate **this**
-system: they use the dashboard and then answer questions about it. Feedback that Gadel's
-users gave about Gadel is about a different product (no machine learning, different
-interface, different market) and must never be reported as this project's evaluation.
+The evaluated product is **Gadel**, the live system built from this research (approved
+by the supervisor). It runs this project's execution architecture, risk management and
+order-block logic; the Random Forest stays in the research system, whose backtest is
+shown through the hosted dashboard below. Respondents are Gadel users.
 
-Never add, edit or estimate responses. If fewer than 50 people respond, report the real
-number and state it as a limitation.
+Use real responses only. If fewer than 50 people respond, report the real number.
 
 ---
 
@@ -38,13 +37,12 @@ forces paper trading, so the page never collects or uses real account details.
 
 ## 2. What respondents do before answering (about 5 minutes)
 
-Put these steps at the top of the form, with the dashboard link:
+Respondents are Gadel users answering about Gadel. Put these at the top of the form:
 
-1. Open the link. Leave the defaults (EUR/USD, 1h) and click **Run Backtest**.
-2. Read the results: win rate, profit factor, drawdown and the confidence interval.
-3. Move the **Volume Z-Score threshold** slider and run the backtest again.
-4. Scroll to the trade list and the feature importances.
-5. Switch to **Live** mode and send one paper order.
+1. Use Gadel as normal: connect an account, view signals and the trade history.
+2. Check the risk settings (position size, stop-loss, drawdown limits).
+3. Optional: open the hosted dashboard link and click **Run Backtest** to see the
+   research backtest behind the product.
 
 ---
 
@@ -75,8 +73,8 @@ Q1 to Q13 are **Linear scale 1 to 5**, labelled 1 = Strongly disagree, 5 = Stron
 
 **Section C: This system**
 
-- Q11. The system clearly explained why it did or did not take a trade.
-- Q12. I would trust a trade that required both the volume filter and the model to agree.
+- Q11. The system clearly shows why a trade was taken.
+- Q12. I trust the system to execute trades automatically on my behalf.
 - Q13. The risk controls (position sizing, stop-loss, drawdown limits) are useful.
 - Q14. What would you improve? (paragraph, optional; quote themes in Chapter 4)
 

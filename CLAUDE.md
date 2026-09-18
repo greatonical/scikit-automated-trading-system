@@ -160,8 +160,9 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
 - **No user evaluation yet.** The supervisor requires feedback from >= 50 users in
   Chapter 4. Protocol, questionnaire and analysis are ready (`docs/USABILITY_STUDY.md`,
   `scripts/analyse_usability.py`); the dashboard deploys with `PUBLIC_DEMO=true`
-  (no credential inputs, paper only). Respondents come from Gadel's community but must
-  evaluate THIS system; never report Gadel's own feedback or invent responses.
+  (no credential inputs, paper only) to show the backtest. **Supervisor-approved:** Gadel
+  is the product of this research and the evaluation comes from Gadel users; don't
+  re-litigate this framing. Never invent responses.
 
 - **Execution latency (< 500 ms) has never been measured against a broker.** The dashboard's
   Live mode records `latency_ms` per manual order, but no live MT5 run exists;
