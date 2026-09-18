@@ -81,10 +81,11 @@ scripts/live_session.py   live signal->order chain on a demo account (docs/LIVE_
 scripts/make_defence_deck.py  builds docs/DEFENCE_PRESENTATION_GENERATED.pptx. The hand-edited
                           docs/DEFENCE_PRESENTATION.pptx is the source of truth: never regenerate over it.
                           Supervisor requirements for deck + chapters: docs/SUPERVISOR_NOTES.md
+scripts/analyse_usability.py  analyses the usability questionnaire CSV (docs/USABILITY_STUDY.md)
 scripts/make_progress_docx.py one-off: renders the June progress report (needs python-docx)
 docker/engine/            engine + dashboard image (Linux Python, no Wine)
 docker/mt5/               Wine + xvfb + MT5 image — documented DEAD END, see below
-tests/                    218 tests, all passing
+tests/                    244 tests, all passing
 ```
 
 ## Commands
@@ -93,7 +94,7 @@ Full setup + runbook for a human (dashboard walkthrough, mock vs live, troublesh
 `docs/COMMANDS.md`.
 
 ```bash
-.venv/bin/python -m pytest -q                          # 218 pass, 2 network deselected
+.venv/bin/python -m pytest -q                          # 244 pass, 2 network deselected
 .venv/bin/python -m pytest -m network -v               # live Yahoo smoke tests
 .venv/bin/python scripts/run_backtest.py EURUSD 1h     # canonical evaluation (also GBPUSD, 4h)
 .venv/bin/python scripts/sweep_winrate.py EURUSD 1h    # exit-geometry frontier
@@ -116,7 +117,7 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
 
 ## Current state (verified 2026-09-15)
 
-- **Modules 1–11 complete**, 218 tests pass, everything documented in `docs/`.
+- **Modules 1–11 complete**, 244 tests pass, everything documented in `docs/`.
 - **Improvement phase A–F complete + full audit done** (`docs/AUDIT_2026-09-15.md`).
   Default config = triple-barrier label (Step A) + close-TP exits (Step E, `SL 1.2% / TP 0.4%`).
 - **Order blocks are implemented and rejected on evidence** (Step F, 2026-09-17):
@@ -155,6 +156,12 @@ Python is 3.14 in `.venv` (spec says 3.10+; 3.14 satisfies it).
   `docs/STRATEGY_CONFIGS.md`; Chapters 1–3 corrections are in `docs/REPORT_CORRECTIONS.md`.
 
 ## Known gaps (tracked facts — don't "fix" silently)
+
+- **No user evaluation yet.** The supervisor requires feedback from >= 50 users in
+  Chapter 4. Protocol, questionnaire and analysis are ready (`docs/USABILITY_STUDY.md`,
+  `scripts/analyse_usability.py`); the dashboard deploys with `PUBLIC_DEMO=true`
+  (no credential inputs, paper only). Respondents come from Gadel's community but must
+  evaluate THIS system; never report Gadel's own feedback or invent responses.
 
 - **Execution latency (< 500 ms) has never been measured against a broker.** The dashboard's
   Live mode records `latency_ms` per manual order, but no live MT5 run exists;

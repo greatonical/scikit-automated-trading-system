@@ -991,16 +991,18 @@ def s_hybrid(prs):
     table(s, data, MARGIN, BODY_TOP + Inches(0.4), CONTENT_W, Inches(1.2),
           col_w=[Inches(3.3), Inches(1.9), Inches(1.9), Inches(2.0)], mark_cols=(3,))
     bullets(s, [
-        "If either gate fails the system returns HOLD, and on roughly 98.7% of candles, "
-        "that is exactly what happens.",
+        "On the EUR/USD test set the volume gate passed on 13.2% of candles and both "
+        "gates on 10.2%; holding one position at a time, the system took 30 trades.",
         "Both comparisons are strictly greater-than, so a borderline value does not trade.",
         "The position is then sized by the Risk Manager: 1% of equity at risk, stop-loss "
         "1.2% and take-profit 0.4% from entry, giving 14,532 units (0.15 lots) in this case.",
         "Every decision, including every HOLD, is logged with its probability and "
         "Z-Score, which is what makes the system auditable.",
     ], y=BODY_TOP + Inches(1.78), size=11.5, gap=5)
-    notes(s, "These are genuine numbers from a dry run, not invented. If asked, the "
-             "selectivity (1.3% of candles) is deliberate; see Barber & Odean.")
+    notes(s, "Genuine numbers from a dry run. The funnel is measured: 2,456 test candles, "
+             "323 pass the volume gate, 251 pass both gates, 30 trades because only one "
+             "position is held at a time. For EUR/USD the model gate passes most candles, "
+             "so the selectivity there comes mainly from the volume filter.")
 
 
 def s_label(prs):
@@ -1338,8 +1340,8 @@ def s_undone(prs):
         ("In progress:", 0, True),
         ("A live execution session on a broker demo account, running on a Windows host, "
          "to record signal-to-fill latency against the 500 ms target. The system and the "
-         "protocol are complete; the session needs calendar time because the volume gate "
-         "fires roughly once or twice per pair per week.", 1),
+         "protocol are complete; the session needs calendar time because the system "
+         "trades only once or twice per pair per week.", 1),
         ("Remaining:", 0, True),
         ("Chapters 4 and 5 of the report: the measured material and figures already "
          "exist in the project documentation.", 1),

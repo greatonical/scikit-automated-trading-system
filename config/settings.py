@@ -386,6 +386,11 @@ WIN_RATE_CI_Z = 1.96
 # historical prices and bar-by-bar SL/TP checks, which a live broker can't do.
 EXECUTION_HANDLER = _env_str("EXECUTION_HANDLER", "mock")
 
+# Public demo mode, for a hosted dashboard link (e.g. the usability study). Hides the
+# broker credential inputs and forces paper trading, so a public page never collects
+# or uses real account details, whatever EXECUTION_HANDLER says.
+PUBLIC_DEMO = _env_str("PUBLIC_DEMO", "false").lower() == "true"
+
 # RPC boundary to the MT5 host (used by RemoteMT5ExecutionHandler). In
 # docker-compose the engine reaches the mt5 service by its service name "mt5".
 MT5_RPC_HOST = _env_str("MT5_RPC_HOST", "mt5")

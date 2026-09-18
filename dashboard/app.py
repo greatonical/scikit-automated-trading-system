@@ -37,30 +37,52 @@ mode = st.radio(
 )
 LIVE = mode.startswith("Live")
 
+# Public demo (hosted link): no credential inputs, paper trading only.
+PUBLIC = settings.PUBLIC_DEMO
+LIVE_HANDLER = "mock" if PUBLIC else None      # None = whatever EXECUTION_HANDLER says
+
+
+@st.cache_resource(show_spinner=False)
+def trained(pair: str, timeframe: str):
+    """Train once per pair/timeframe and share across sessions.
+
+    The sidebar sliders only affect the backtest, not training, so every visitor of
+    a hosted demo reuses the same model instead of waiting for a retrain.
+    """
+    df = service.load_dataset(pair, timeframe)
+    train_df, test_df, pre = service.prepare_split(df)
+    return test_df, pre, service.train_model(pre, train_df, quick=True)
+
+
 # --------------------------------------------------------------------------- #
 # Sidebar — credentials + parameters
 # --------------------------------------------------------------------------- #
 with st.sidebar:
-    st.header("MT5 Demo Credentials")
-    st.caption("Demo account only. Stored only in this session, never committed.")
-    # Pre-fill with real creds if set, else the DUMMY_ placeholders (UI demo).
-    login = st.text_input(
-        "Login ID", value=settings.MT5_LOGIN or settings.DUMMY_MT5_LOGIN
-    )
-    password = st.text_input(
-        "Password",
-        value=settings.MT5_PASSWORD or settings.DUMMY_MT5_PASSWORD,
-        type="password",
-    )
-    server = st.text_input(
-        "Server", value=settings.MT5_SERVER or settings.DUMMY_MT5_SERVER
-    )
-
-    status = service.credentials_status(login, password, server)
-    if status["ready"]:
-        st.success("Credentials complete (for real MT5 mode).")
+    if PUBLIC:
+        st.header("Public Demo")
+        st.info("Paper trading only. This demo never asks for broker credentials: "
+                "do not enter account details anywhere on this page.")
     else:
-        st.info("Credentials optional — backtesting uses the mock broker.")
+        st.header("MT5 Demo Credentials")
+        st.caption("Demo account only. Stored only in this session, never committed.")
+        # Pre-fill with real creds if set, else the DUMMY_ placeholders (UI demo).
+        login = st.text_input(
+            "Login ID", value=settings.MT5_LOGIN or settings.DUMMY_MT5_LOGIN
+        )
+        password = st.text_input(
+            "Password",
+            value=settings.MT5_PASSWORD or settings.DUMMY_MT5_PASSWORD,
+            type="password",
+        )
+        server = st.text_input(
+            "Server", value=settings.MT5_SERVER or settings.DUMMY_MT5_SERVER
+        )
+
+        status = service.credentials_status(login, password, server)
+        if status["ready"]:
+            st.success("Credentials complete (for real MT5 mode).")
+        else:
+            st.info("Credentials optional — backtesting uses the mock broker.")
 
     st.divider()
     st.header("Data")
@@ -86,11 +108,9 @@ with st.sidebar:
 if not LIVE:
     if run_clicked:
         with st.spinner(f"Fetching {pair} {timeframe}, training model, backtesting…"):
-            df = service.load_dataset(pair, timeframe)
-            train_df, test_df, pre = service.prepare_split(df)
-            model = service.train_model(pre, train_df, quick=True)
+            test_df, pre, model = trained(pair, timeframe)
             result = service.run_backtest(
-                pre, model, test_df,
+                pre, model, test_df.copy(),
                 pair=pair,
                 volume_threshold=volume_threshold,
                 confidence_threshold=confidence_threshold,
@@ -132,11 +152,14 @@ if not LIVE:
 # --------------------------------------------------------------------------- #
 else:
     st.subheader("Live order routing — connection status")
-    status = service.live_service_status()
-    st.caption(
-        f"Handler: `{status['handler']}` — set EXECUTION_HANDLER in .env "
-        "(mock = paper, remote_mt5 = RPC to the MT5 host, mt5 = direct on Windows)."
-    )
+    status = service.live_service_status(handler=LIVE_HANDLER)
+    if PUBLIC:
+        st.caption("Public demo: orders fill in a simulated broker (paper trading).")
+    else:
+        st.caption(
+            f"Handler: `{status['handler']}` — set EXECUTION_HANDLER in .env "
+            "(mock = paper, remote_mt5 = RPC to the MT5 host, mt5 = direct on Windows)."
+        )
     if status["reachable"]:
         st.success(status["detail"])
     else:
@@ -160,7 +183,8 @@ else:
     if st.button("Send order", type="primary", disabled=not status["reachable"]):
         with st.spinner(f"Sending via {status['handler']}…"):
             res = service.send_live_signal(
-                symbol=pair, side=side, volume_lots=volume, sl=sl, tp=tp, price=entry
+                symbol=pair, side=side, volume_lots=volume, sl=sl, tp=tp, price=entry,
+                handler=LIVE_HANDLER,
             )
         if res.get("status") == "error":
             st.error(res["error"])

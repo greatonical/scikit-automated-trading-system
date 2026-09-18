@@ -22,8 +22,10 @@ Read this first, because it determines what you may write in Chapter 4.
 - **Signal-to-fill latency**, measured per order against the 500 ms target.
 
 **It does not prove:**
-- Anything about win rate, profit factor, drawdown or Sharpe. The volume gate fires
-  on roughly 1.3% of bars, so expect **1–2 trades per pair per week**. Ten trades is
+- Anything about win rate, profit factor, drawdown or Sharpe. On the test set the
+  volume gate passes about 13% of hourly bars and both gates about 5–10%, but only one
+  position is held at a time, so the system trades on roughly 1.2–1.5% of bars:
+  expect **1–2 trades per pair per week**. Ten trades is
   not a performance result and must never be presented as one.
 
 Say this explicitly in the report. A small, honest live-execution validation next to
@@ -71,8 +73,8 @@ With `EXECUTION_HANDLER=mock` still set:
 Same chain, filled in the in-process simulated broker. This confirms the plumbing
 before a real broker is involved. **Screenshot this** — it's a Chapter 4 figure.
 
-**If it says HOLD, that is normal** — the volume gate only fires on ~1.3% of bars, so
-most hours produce no trade. Don't wait days to find out whether the order path itself
+**If it says HOLD, that is normal**: the volume gate passes only about 13% of bars,
+and the system trades on roughly 1.2–1.5% of them, so most hours produce no trade. Don't wait days to find out whether the order path itself
 works. Force one through by temporarily lowering the gate, writing to a **scratch log**
 so your evidence log stays clean:
 
