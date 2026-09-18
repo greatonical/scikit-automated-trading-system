@@ -35,3 +35,8 @@ htmlcov/
 
 # Claude Code local permissions (machine-specific)
 .claude/settings.local.json
+
+# Defence decks stay local: hand-edited, and they contain third-party screenshots.
+docs/DEFENCE_PRESENTATION.pptx
+docs/DEFENCE_PRESENTATION_OLD.pptx
+docs/DEFENCE_PRESENTATION_GENERATED.pptx
