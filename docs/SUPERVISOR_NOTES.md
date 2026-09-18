@@ -41,29 +41,37 @@ the real number and state it as a limitation.
 
 ## 2. Presentation (the supervisor's order)
 
-| # | Requirement | Current deck | Action |
-|---|---|---|---|
-| 1 | Introduction ≤ 2 slides | ✅ 2 slides | none |
-| 2 | Literature review table: Author, Title, **Problem identified**, Methodology, **Solution proffered**, Remarks | ⚠️ columns are Method / Finding / Comment | restructure the table |
-| 3 | Literature from the **last 2–3 years** (2023–2026) | ❌ 2000–2021 | add recent, verified papers |
-| 4 | Gaps stated so they "sound like a problem" | ⚠️ implied, not listed | add an explicit gaps slide |
-| 5 | Problem statement **after** the literature review, driven by the gaps | ❌ comes before | move and rewrite from the gaps |
-| 6 | **One** aim that does not restate the title | ❌ restates the title | rewrite (proposal below) |
-| 7 | **Exactly 5** objectives, Roman numerals, sequential, not "create/build", "formulate" for the model, last = evaluate | ❌ 4 objectives | rewrite (proposal below) |
-| 8 | Methodology **for each objective**, naming the technology | ❌ one general slide | objective → method → tools table |
-| 9 | Testing and evaluation slide | ❌ | add |
-| 10 | Scope (direct, sharp) **then** justification | ❌ order reversed | swap |
-| 11 | Work done, itemised: **Data collection and analysis**, design specification, implementation and prototype tools | ⚠️ no data slide | add a data collection and analysis slide |
-| 12 | Diagrams labelled; figure label **below** | ✅ | none |
-| 13 | Table label **above**, description **below** | ❌ tables unlabelled | label every table |
-| 14 | Two screenshots per slide labelled Figure N and Figure N+1 (not 3a/3b) | ⚠️ slide 29 has one caption for two images | give each image its own number |
-| 15 | System evaluation: usability criteria table + responses table | ❌ | depends on §1 |
-| 16 | Explain the technical workings, not just sign-in/sign-up | ✅ strong | none |
-| 17 | Conclusion **then** contribution to knowledge, then references | ❌ contribution comes before conclusion | reorder |
-| 18 | Screenshots sharp, high resolution | ⚠️ slide 25 still placeholders | capture backtest output and dashboard |
+Status after the 2026-09-18 restructure (the deck is now 41 slides, local only):
 
-"Work Left Undone" is a proposal-stage (503) heading; for the final defence consider
-"Limitations and Future Work".
+| # | Requirement | Status |
+|---|---|---|
+| 1 | Introduction ≤ 2 slides | ✅ 2 slides |
+| 2 | Literature table: Author, Title, Problem identified, Methodology, Solution proffered, Remarks | ✅ exactly these columns, over three slides |
+| 3 | Literature from the last 2–3 years | ✅ 8 papers, 2023–2025, each confirmed in the Crossref DOI registry |
+| 4 | Gaps stated so they sound like problems | ✅ new *Research Gaps* slide, each gap cited |
+| 5 | Problem statement after the review, driven by the gaps | ✅ moved and rewritten from the gaps |
+| 6 | One aim that does not restate the title | ✅ |
+| 7 | Exactly 5 objectives, Roman numerals, sequential, "formulate", last = evaluate | ✅ (§4 below) |
+| 8 | Methodology for each objective, naming the technology | ✅ objective → method → technology table |
+| 9 | Testing and evaluation slide | ✅ |
+| 10 | Scope then justification | ✅ |
+| 11 | Work done itemised, with data collection and analysis | ✅ incl. a data slide computed from the real dataset |
+| 12 | Diagrams labelled, figure label below | ✅ Figures 1–14, every image its own number |
+| 13 | Table label above, description below | ✅ Tables 1–11 |
+| 14 | Two screenshots per slide as Figure N and N+1 | ✅ |
+| 15 | Usability criteria table + responses table | ⚠️ both tables built; responses **pending the real study** (§1) |
+| 16 | Explain the technical workings | ✅ |
+| 17 | Conclusion, then contribution to knowledge, then references | ✅ ("Work Left Undone" became "Limitations and Future Work") |
+| 18 | Sharp, high-resolution screenshots | ⚠️ the *Prototype: Backtest Run and Dashboard* slide still has two placeholders |
+
+**Open items for the author before the defence:**
+
+- Run the usability study (`docs/USABILITY_STUDY.md`) and fill Table 11's "pending" cells.
+- Capture the two prototype screenshots (backtest terminal output, dashboard).
+- Open each literature DOI once in a browser. Arian et al. (2024) was verified in the
+  DOI registry, but its abstract came from an SSRN listing rather than the publisher.
+- Check the López-Herrera et al. (2025) co-author names against the published PDF:
+  the DOI registry splits the Spanish surnames as "Jiménez, J.G.M." and "Santiago, A.R.".
 
 ---
 

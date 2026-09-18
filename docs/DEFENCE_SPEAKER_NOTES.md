@@ -9,7 +9,7 @@ Greet the panel. State the title, then one sentence: the system combines a stati
 
 ## Slide 2: Presentation Outline
 
-Keep this to fifteen seconds. Point out that the second column is where the evidence lives: design, results, and the live product.
+Fifteen seconds. The order follows the department's structure: literature, the gaps it reveals, the problem those gaps create, then what was done.
 
 ## Slide 3: Introduction
 
@@ -19,130 +19,150 @@ Set up the problem in plain language. The last bullet is the framing the whole d
 
 If a panel member asks 'why not an LSTM?', this slide is the answer and it is already in Chapter 2. Interpretability is a stated project goal.
 
-## Slide 5: Statement of the Problem
+## Slide 5: Literature Review (1 of 3)
 
-The third and fourth bullets are your differentiator. Most projects in this area cannot say them. Say them slowly.
+Read the Remarks column aloud: it shows how each study supports, contradicts or leaves a gap for this project. All are 2023 to 2025.
 
-## Slide 6: Aim and Objectives
+## Slide 6: Literature Review (2 of 3)
 
-Objective (iv) is the one to emphasise: the project is judged by whether the evaluation is sound, not by whether the numbers are flattering.
+Read the Remarks column aloud: it shows how each study supports, contradicts or leaves a gap for this project. All are 2023 to 2025.
 
-## Slide 7: Literature Review (1 of 2)
+## Slide 7: Literature Review (3 of 3)
 
-The 'Comment' column is the important one; it shows you engaged with each paper and measured its claim rather than citing it decoratively.
+Read the Remarks column aloud: it shows how each study supports, contradicts or leaves a gap for this project. All are 2023 to 2025.
 
-## Slide 8: Literature Review (2 of 2)
+## Slide 8: Research Gaps
 
-Bailey et al. is your defence against 'did you overfit?'. The answer is a process answer, and it was designed in from the start.
+Each gap is phrased as a problem and backed by a recent paper. The problem statement on the next slide is built directly from these gaps.
 
-## Slide 9: Methodology
+## Slide 9: Statement of the Problem
 
-The anti-leakage tests are worth naming aloud: each one deletes future rows and asserts that past feature values do not change.
+Literature-driven: every sentence here points back to a gap on the previous slide. Read the boxed problem slowly; the aim answers it directly.
 
-## Slide 10: Justification
+## Slide 10: Aim and Objectives
 
-Bullet four is the academic justification; bullet five is the engineering justification. Both matter to this panel.
+One aim, stated as the problem the work addresses rather than a restatement of the title. Five objectives in the order they were carried out: data, model, design, implementation, evaluation. Each is shown being met later.
 
-## Slide 11: Scope of the Project
+## Slide 11: Methodology
+
+Walk the table row by row: for each objective, what was done and with which technology. This is where the panel sees the tools at a glance.
+
+## Slide 12: Testing and Evaluation
+
+Four independent checks. Emphasise the baseline: it is what shows how much of the win rate is the model and how much is simply the exit placement.
+
+## Slide 13: Scope of the Project
 
 State the data limitation yourself before anyone asks. It is a documented property of the data source, not a design flaw.
 
-## Slide 12: Work Done
+## Slide 14: Justification
 
-This is the map for the next twelve slides. Say: 'the design is not a proposal; all of it is built and measured.'
+Bullet four is the academic justification; bullet five is the engineering justification. Both matter to this panel.
 
-## Slide 13: Design Specification: Context Diagram
+## Slide 15: Work Done
+
+This is the map for the next section: data, then design, then the prototype, then how it was tested.
+
+## Slide 16: Work Done: Data Collection and Analysis
+
+All figures are computed from the cached dataset the results depend on. The two-year window is Yahoo Finance's limit for hourly data, not a design choice.
+
+## Slide 17: Design Specification: Context Diagram
 
 Standard Level-0 DFD: exactly one process, external entities as rectangles, labelled data flows, and no internal data stores at this level. Point out that the broker is an external entity; that is what makes it swappable.
 
-## Slide 14: Design Specification: System Architecture
+## Slide 18: Design Specification: System Architecture
 
 The rule that matters: nothing above Layer 4 knows which broker is in use. That is what makes mock-versus-real a one-line configuration change.
 
-## Slide 15: Design Specification: Block Diagram
+## Slide 19: Design Specification: Block Diagram
 
 Walk left to right in one sentence per block. Stress that the labeller feeds training only, and the backtester consumes the same pipeline as live trading.
 
-## Slide 16: Design Specification: Use Case Diagram
+## Slide 20: Design Specification: Use Case Diagram
 
 Notation check if asked: actors sit outside the boundary; «include» points from the base use case to the one it always invokes; «extend» points from the optional behaviour back to the base use case it may extend.
 
-## Slide 17: Design Specification: Activity Diagram
+## Slide 21: Design Specification: Activity Diagram
 
 This is the heart of the system. Both guards must be true; either [no] branch merges to HOLD. Note the strict greater-than on both thresholds.
 
-## Slide 18: Design Specification: Class Diagram
+## Slide 22: Design Specification: Class Diagram
 
 The generalization triangles point at the abstract class. This is the design decision that let the whole system be built and tested on macOS while the real broker library is Windows-only.
 
-## Slide 19: How a Trade Is Actually Decided
+## Slide 23: How a Trade Is Actually Decided
 
-These are genuine numbers from a dry run, not invented. If asked, the selectivity (1.3% of candles) is deliberate; see Barber & Odean.
+Genuine numbers from a dry run. The funnel is measured: 2,456 test candles, 323 pass the volume gate, 251 pass both gates, 30 trades because only one position is held at a time. For EUR/USD the model gate passes most candles, so the selectivity there comes mainly from the volume filter.
 
-## Slide 20: The Decisive Design Decision: Triple-Barrier Labelling
+## Slide 24: The Decisive Design Decision: Triple-Barrier Labelling
 
 If you are asked 'what was your biggest contribution?', this is the answer: changing the question the model is asked, so the training target matches how a trade actually resolves.
 
-## Slide 21: Results: Held-Out Test Set, Costs Included
-
-Do not hide the two FAILs; lead with them if necessary. A panel trusts a candidate who reports failures precisely far more than one whose every number passes.
-
-## Slide 22: Results: How Much of This Is Actually the Model?
-
-This slide wins vivas. You raised the objection before the panel did, quantified it, and showed where the model still adds value.
-
-## Slide 23: Results: Six Measured Negative Results
-
-Frame this as publishable. Most student projects report only what worked; you can state precisely what did not, and by how much.
-
-## Slide 24: Case Study: Order Blocks, Tested Properly
-
-This is your strongest single slide for demonstrating research method: a popular technique, implemented faithfully, measured, and rejected on evidence, with an explanation of WHY it failed.
-
-## Slide 25: Evidence: Backtest Run and Dashboard
+## Slide 25: Prototype: Backtest Run and Dashboard
 
 Have both of these open in a terminal and a browser tab during the defence in case the panel asks you to run it live. Commands are in docs/COMMANDS.md.
 
-## Slide 26: Deployment: A Documented Engineering Finding
+## Slide 26: Results: Held-Out Test Set, Costs Included
+
+Do not hide the two FAILs; lead with them if necessary. A panel trusts a candidate who reports failures precisely far more than one whose every number passes.
+
+## Slide 27: Results: How Much of This Is Actually the Model?
+
+This slide wins vivas. You raised the objection before the panel did, quantified it, and showed where the model still adds value.
+
+## Slide 28: Results: Six Measured Negative Results
+
+Frame this as publishable. Most student projects report only what worked; you can state precisely what did not, and by how much.
+
+## Slide 29: Case Study: Order Blocks, Tested Properly
+
+This is your strongest single slide for demonstrating research method: a popular technique, implemented faithfully, measured, and rejected on evidence, with an explanation of WHY it failed.
+
+## Slide 30: System Evaluation: Usability
+
+Two tables, as the department asks: the criteria, then the responses. The responses are filled only from real questionnaire data. If fewer than 50 people respond, report the real number and state it as a limitation.
+
+## Slide 31: Deployment: A Documented Engineering Finding
 
 Say 'negative result' with confidence. You proved a published approach does not work and documented why; that is a contribution.
 
-## Slide 27: From Research to a Live Product
+## Slide 32: From Research to a Live Product
 
 Be precise about the direction of transfer: the ARCHITECTURE and the Wine finding transferred. Gadel contains no machine learning and has never run this project's model; do not claim its trading results as yours.
 
-## Slide 28: What the Live Product Does and Does Not Prove
+## Slide 33: What the Live Product Does and Does Not Prove
 
 Rehearse this slide. If a panel member suspects you are borrowing another system's results, this slide answers it before they finish the question.
 
-## Slide 29: Evidence: The Live Deployment
+## Slide 34: Evidence: Gadel's Live Deployment
 
 Redaction is not optional: these are real accounts. Black boxes over account numbers, balances, server hostnames and any token.
 
-## Slide 30: Relevance and Potential Impact
+## Slide 35: Relevance and Potential Impact
 
 Say 'expressed interest', never 'customers' or 'willing to pay': a waiting-list signup is not a purchase. Overstating this is the one thing that could damage your credibility on an otherwise careful project.
 
-## Slide 31: Contribution to Knowledge
+## Slide 36: Limitations and Future Work
 
-Six contributions, and four of them are about method rather than performance. That is the right emphasis for a Computer Science degree.
+State the limitations before the panel does. Each one is measured and documented, which is what makes the results defensible.
 
-## Slide 32: Work Left Undone
-
-Being specific about what is unfinished, and why, reads as control. The latency session is limited by market conditions, not by unfinished code.
-
-## Slide 33: Conclusion
+## Slide 37: Conclusion
 
 Close on the last bullet and stop talking. It is the strongest sentence you have and it invites exactly the questions you are prepared for.
 
-## Slide 34: References (1 of 2)
+## Slide 38: Contribution to Knowledge
 
-Do not read these aloud. They are here so the panel can see the work is grounded in the literature; the full list is in the report.
+Six contributions, and four of them are about method rather than performance. That is the right emphasis for a Computer Science degree.
 
-## Slide 35: References (2 of 2)
+## Slide 39: References (1 of 2)
 
-Do not read these aloud. They are here so the panel can see the work is grounded in the literature; the full list is in the report.
+Do not read these aloud. Every source cited on a slide is listed, and nothing uncited is.
 
-## Slide 36: Thank You
+## Slide 40: References (2 of 2)
+
+Do not read these aloud. Every source cited on a slide is listed, and nothing uncited is.
+
+## Slide 41: Thank You
 
 Have docs/DEFENCE_GUIDE.md open on a second screen; it holds prepared answers to the twelve most likely questions.
