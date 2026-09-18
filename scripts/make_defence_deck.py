@@ -45,7 +45,10 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN                  # noqa: E402
 from pptx.oxml.ns import qn                                      # noqa: E402
 from pptx.util import Emu, Inches, Pt                            # noqa: E402
 
-OUT = ROOT / "docs" / "DEFENCE_PRESENTATION.pptx"
+# Writes to a SEPARATE file on purpose. docs/DEFENCE_PRESENTATION.pptx is now the
+# author's hand-edited deck (round-tripped through Google Slides, screenshots added)
+# and is the source of truth; regenerating must never overwrite it.
+OUT = ROOT / "docs" / "DEFENCE_PRESENTATION_GENERATED.pptx"
 NOTES_OUT = ROOT / "docs" / "DEFENCE_SPEAKER_NOTES.md"
 
 # Base template — see the Keynote note in the module docstring. Without it the deck

@@ -78,7 +78,9 @@ scripts/tune_thresholds.py 60/20/20 val-tuned threshold search (Step C)
 scripts/baseline_noskill.py same exits, random/fixed direction — how much is the model?
 scripts/inspect_model.py  human-readable view of models/*.pkl incl. provenance
 scripts/live_session.py   live signal->order chain on a demo account (docs/LIVE_DEMO_RUNBOOK.md)
-scripts/make_defence_deck.py  builds docs/DEFENCE_PRESENTATION.pptx (CSC 504 defence, native shapes)
+scripts/make_defence_deck.py  builds docs/DEFENCE_PRESENTATION_GENERATED.pptx. The hand-edited
+                          docs/DEFENCE_PRESENTATION.pptx is the source of truth: never regenerate over it.
+                          Supervisor requirements for deck + chapters: docs/SUPERVISOR_NOTES.md
 scripts/make_progress_docx.py one-off: renders the June progress report (needs python-docx)
 docker/engine/            engine + dashboard image (Linux Python, no Wine)
 docker/mt5/               Wine + xvfb + MT5 image — documented DEAD END, see below
