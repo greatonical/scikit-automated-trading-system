@@ -17,6 +17,8 @@ Use real responses only. If fewer than 50 people respond, report the real number
 
 ## 1. Put the dashboard online (about 10 minutes)
 
+**Live:** https://scikit-automated-trading-system.streamlit.app/
+
 The repository is public and already contains the cached market data, so it deploys to
 Streamlit Community Cloud as-is. Public-demo mode hides the broker credential boxes and
 forces paper trading, so the page never collects or uses real account details.
